@@ -86,3 +86,20 @@ protocol (on arduino) should have:
 - pack: pack a message into bytes
 - receive: receive message from computer
 - send: send message to computer
+
+
+So far things are shaping up as having 1 command passing structure (Comando).
+This can have several protocols (for plain text, packed commands, errors, etc). Format is as follows
+
+length in bytes (0-255), payload (...), checksum (1 byte)
+
+payload has:
+
+protocol index (0-255), protocol payload
+
+Some protocols include:
+
+Text protocol (0): just send/receive
+Echo protocol (1): echos everything received
+Error protocol (2): todo
+Command protocol (3): todo, similar to cmdmessenger
