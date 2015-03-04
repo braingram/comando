@@ -7,10 +7,12 @@
  */
 #include<comando.h>
 
-BaseComando cmd = BaseComando(Serial);
+Comando cmd = Comando(Serial);
+EchoProtocol echo = EchoProtocol(cmd);
 
 void setup() {
   Serial.begin(9600);
+  cmd.register_protocol(0, echo);
 }
 
 void loop() {

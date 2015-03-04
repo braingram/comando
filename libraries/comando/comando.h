@@ -29,14 +29,14 @@ enum {
   WAITING,
 };
 
-class BaseComando;
+class Comando;
 
 class Protocol {
   protected:
-    BaseComando *cmdo;
+    Comando *cmdo;
     byte index;
   public:
-    Protocol(BaseComando & bcmdo);
+    Protocol(Comando & bcmdo);
     virtual void send_message(byte *bytes, byte n_bytes);
     virtual void receive_message(byte *bytes, byte n_bytes);
     void set_index(byte i);
@@ -45,7 +45,7 @@ class Protocol {
 
 class EchoProtocol: public Protocol {
   public:
-    EchoProtocol(BaseComando & bcmdo);
+    EchoProtocol(Comando & bcmdo);
     void receive_message(byte *bytes, byte n_bytes);
 };
 
@@ -53,11 +53,11 @@ class CmdProtocol: public Protocol {
   protected:
     callback_function callbacks[MAX_CALLBACKS];
   public:
-    CmdProtocol(BaseComando & bcmdo);
+    CmdProtocol(Comando & bcmdo);
     void receive_message(byte *bytes, byte n_bytes);
 };
 
-class BaseComando {
+class Comando {
   protected:
     byte byte_index;
     byte n_bytes;
@@ -74,7 +74,7 @@ class BaseComando {
     virtual void default_error_callback();
 
   public:
-    BaseComando(Stream & communication_stream);
+    Comando(Stream & communication_stream);
 
     void register_protocol(byte index, Protocol & protocol);
 
@@ -96,7 +96,7 @@ class BaseComando {
 };
 
 /*
-class Comando: public BaseComando {
+class Comando: public Comando {
   protected:
     void default_message_callback();
     void default_error_callback();
@@ -122,14 +122,14 @@ class Comando: public BaseComando {
 
 class Commander {
   protected:
-    BaseComando *cmdo;
+    Comando *cmdo;
     byte byte_index;
     byte *bytes;
     byte n_bytes;
     callback_function error_callback;
     callback_function callbacks[MAX_CALLBACKS];
   public:
-    Commander(BaseComando &bcmdo);
+    Commander(Comando &bcmdo);
 
     void error();
     void receive_message(byte *bytes, byte n_bytes);

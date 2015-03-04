@@ -7,7 +7,7 @@ byte compute_checksum(byte *bytes, byte n) {
 };
 
 
-Protocol::Protocol(BaseComando & bcmdo) {
+Protocol::Protocol(Comando & bcmdo) {
   cmdo = &bcmdo;
 };
 
@@ -27,7 +27,7 @@ void Protocol::receive_message(byte *bytes, byte n_bytes) {
 };
 
 // =============== EchoProtocol ============
-EchoProtocol::EchoProtocol(BaseComando & bcmdo): Protocol(bcmdo) {};
+EchoProtocol::EchoProtocol(Comando & bcmdo): Protocol(bcmdo) {};
 
 void EchoProtocol::receive_message(byte *bytes, byte n_bytes) {
   // TODO add protocol index, or should this be done elsewhere?
@@ -35,7 +35,7 @@ void EchoProtocol::receive_message(byte *bytes, byte n_bytes) {
 };
 
 // =============== CmdProtocol ============
-CmdProtocol::CmdProtocol(BaseComando & bcmdo): Protocol(bcmdo) {
+CmdProtocol::CmdProtocol(Comando & bcmdo): Protocol(bcmdo) {
   for(byte i=0; i<MAX_CALLBACKS; i++) {
     callbacks[i] = NULL;
   };
@@ -52,8 +52,8 @@ void CmdProtocol::receive_message(byte *bytes, byte n_bytes) {
   };
 };
 
-// ================= BaseComando ==========
-void BaseComando::receive_byte(byte b) {
+// ================= Comando ==========
+void Comando::receive_byte(byte b) {
   if (read_state == WAITING) {
     // this is n
     n_bytes = b;
@@ -84,7 +84,7 @@ void BaseComando::receive_byte(byte b) {
   };
 }
 
-void BaseComando::default_message_callback() {
+void Comando::default_message_callback() {
   if (n_bytes < 1) {
     // TODO error
   } else {
@@ -97,12 +97,12 @@ void BaseComando::default_message_callback() {
   };
 };
 
-void BaseComando::default_error_callback() {
+void Comando::default_error_callback() {
   send_message("error");
 };
 
 
-BaseComando::BaseComando(Stream & communication_stream) {
+Comando::Comando(Stream & communication_stream) {
   stream = &communication_stream;
   message_callback = NULL;
   error_callback = NULL;
@@ -112,69 +112,69 @@ BaseComando::BaseComando(Stream & communication_stream) {
   reset();
 };
 
-void BaseComando::reset() {
+void Comando::reset() {
   byte_index = 0;
   n_bytes = 0;
   cs = 0;
   read_state = WAITING;
 };
 
-void BaseComando::on_message(callback_function message_handler) {
+void Comando::on_message(callback_function message_handler) {
   message_callback = message_handler;
 };
 
-void BaseComando::on_error(callback_function error_handler) {
+void Comando::on_error(callback_function error_handler) {
   error_callback = error_handler;
 };
 
-void BaseComando::handle_stream() {
+void Comando::handle_stream() {
   while (stream->available()) {
     receive_byte(stream->read());
   };
 };
 
-void BaseComando::send_message(byte *buffer, byte n) {
+void Comando::send_message(byte *buffer, byte n) {
   stream->write(n);
   stream->write(buffer, n);
   stream->write(compute_checksum(buffer, n));
 };
 
-void BaseComando::send_message(byte *buffer) {
+void Comando::send_message(byte *buffer) {
   send_message(buffer, strlen((char *) buffer));
 };
 
-void BaseComando::send_message(char *buffer, byte n) {
+void Comando::send_message(char *buffer, byte n) {
   send_message((byte *) buffer, n);
 };
 
-void BaseComando::send_message(char *buffer) {
+void Comando::send_message(char *buffer) {
   send_message(buffer, strlen(buffer));
 };
 
-byte BaseComando::copy_bytes(byte *buffer, byte n) {
+byte Comando::copy_bytes(byte *buffer, byte n) {
   if (n < n_bytes) return 0;
   if (n_bytes == 0) return 0;
   memcpy(buffer, bytes, n_bytes);
   return n_bytes;
 };
 
-byte BaseComando::copy_bytes(byte *buffer) {
+byte Comando::copy_bytes(byte *buffer) {
   return copy_bytes(buffer, n_bytes);
 };
 
-byte* BaseComando::get_bytes() {
+byte* Comando::get_bytes() {
   return bytes;
 };
 
-byte BaseComando::get_n_bytes() {
+byte Comando::get_n_bytes() {
   return n_bytes;
 };
 
-byte BaseComando::get_checksum() {
+byte Comando::get_checksum() {
   return cs;
 };
 
-void BaseComando::register_protocol(byte index, Protocol & protocol) {
+void Comando::register_protocol(byte index, Protocol & protocol) {
   if (index < MAX_PROTOCOLS) {
     protocols[index] = &protocol;
   } else {
@@ -183,7 +183,7 @@ void BaseComando::register_protocol(byte index, Protocol & protocol) {
 };
 
 /*
-Comando::Comando(Stream & communication_stream): BaseComando(communication_stream) {
+Comando::Comando(Stream & communication_stream): Comando(communication_stream) {
   for(byte i=0; i<MAX_CALLBACKS; i++) {
     callbacks[i] = NULL;
   };
@@ -207,7 +207,7 @@ void Comando::attach(byte cmd_id, callback_function callback) {
   callbacks[cmd_id] = callback;
 };
 
-Commander::Commander(BaseComando &bcmdo) {
+Commander::Commander(Comando &bcmdo) {
   cmdo = bcmdo;
   for(byte i=0; i<MAX_CALLBACKS; i++) {
     callbacks[i] = NULL;
