@@ -20,12 +20,41 @@ extern "C" {
 
 #define MAX_MSG_LENGTH 255
 #define MAX_CALLBACKS 50
+#define MAX_PROTOCOLS 10
 
 byte compute_checksum(byte *bytes, byte n);
 
 enum {
   READING,
   WAITING,
+};
+
+class BaseComando;
+
+class Protocol {
+  protected:
+    BaseComando *cmdo;
+    byte index;
+  public:
+    Protocol(BaseComando & bcmdo);
+    virtual void send_message(byte *bytes, byte n_bytes);
+    virtual void receive_message(byte *bytes, byte n_bytes);
+    void set_index(byte i);
+    byte get_index();
+};
+
+class EchoProtocol: public Protocol {
+  public:
+    EchoProtocol(BaseComando & bcmdo);
+    void receive_message(byte *bytes, byte n_bytes);
+};
+
+class CmdProtocol: public Protocol {
+  protected:
+    callback_function callbacks[MAX_CALLBACKS];
+  public:
+    CmdProtocol(BaseComando & bcmdo);
+    void receive_message(byte *bytes, byte n_bytes);
 };
 
 class BaseComando {
@@ -38,13 +67,16 @@ class BaseComando {
     Stream *stream;
     callback_function message_callback;
     callback_function error_callback;
+    Protocol *protocols[MAX_PROTOCOLS];
 
-    void handle_byte(byte b);
+    void receive_byte(byte b);
     virtual void default_message_callback();
     virtual void default_error_callback();
 
   public:
     BaseComando(Stream & communication_stream);
+
+    void register_protocol(byte index, Protocol & protocol);
 
     void reset();
     void on_message(callback_function message_handler);
@@ -63,7 +95,7 @@ class BaseComando {
     byte get_checksum();
 };
 
-
+/*
 class Comando: public BaseComando {
   protected:
     void default_message_callback();
@@ -100,8 +132,8 @@ class Commander {
     Commander(BaseComando &bcmdo);
 
     void error();
-    void handle_message(byte *bytes, byte n_bytes);
-    void handle_message(byte *bytes);
+    void receive_message(byte *bytes, byte n_bytes);
+    void receive_message(byte *bytes);
     void attach(byte cmd_id, callback_function callback);
 
     template <class T> T read_arg() {
@@ -117,5 +149,5 @@ class Commander {
     };
     // TODO functions to pack args
 };
-
+*/
 #endif

@@ -8,7 +8,7 @@
 #include<comando.h>
 
 BaseComando cmd = BaseComando(Serial);
-Commander cmder = Commander(cmd);
+Commander cmder = Commander();
 
 void a0(){
   cmd.send_message("a0");
@@ -24,7 +24,7 @@ void a2(){
 
 void handle() {
   // handle message from cmd
-  cmder.handle_message(cmd.get_bytes(), cmd.get_n_bytes());
+  cmder.receive_message(cmd.get_bytes(), cmd.get_n_bytes());
 };
 
 void setup() {

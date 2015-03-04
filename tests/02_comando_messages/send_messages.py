@@ -26,12 +26,12 @@ def show(bs):
 
 h.on_message = show
 
-msg = "hi"
+msg = "\x00hi"
 print("<-%r" % msg)
 h.write(msg)
 h.read()
 
-msg = "how are you"
+msg = "\x00how are you"
 print("<-%r" % msg)
 h.write(msg)
 h.read()
