@@ -24,14 +24,14 @@ print("\t<- from computer, -> = from arduino")
 def show(bs):
     print("->%r" % bs)
 
-h.on_message = show
+h.receive_message = show
 
 msg = "\x00hi"
 print("<-%r" % msg)
-h.write(msg)
-h.read()
+h.send_message(msg)
+h.handle_stream()
 
 msg = "\x00how are you"
 print("<-%r" % msg)
-h.write(msg)
-h.read()
+h.send_message(msg)
+h.handle_stream()

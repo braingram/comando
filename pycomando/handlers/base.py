@@ -23,7 +23,7 @@ class StreamHandler(object):
     def __init__(self, stream):
         self.stream = stream
 
-    def read(self):
+    def handle_stream(self):
         n = ord(self.stream.read(1))
         if n != '\x00':
             bs = self.stream.read(n)
@@ -38,14 +38,33 @@ class StreamHandler(object):
             raise Exception(
                 "Invalid message checksum [%s != %s]" %
                 (chr(checksum(bs)), cs))
-        self.on_message(bs)
+        self.receive_message(bs)
 
-    def write(self, bs):
+    def send_message(self, bs):
         self.stream.write(build_message(bs))
 
-    def on_message(self, bs):
+    def receive_message(self, bs):
         raise NotImplementedError(
             "StreamHandler does not know how to handle messages, "
             "use a differnt (subclass) handler")
 
-    # TODO check for read, handle reads and writes?
+
+class ProtocolHandler(StreamHandler):
+    def __init__(self, stream, protocols=None):
+        StreamHandler.__init__(self, stream)
+        self.protocols = {}
+        if protocols is not None:
+            [self.add_protocol(i, p) for (i, p) in enumerate(protocols)]
+
+    def add_protocol(self, index, protocol):
+        # TODO check protocol
+        self.protocols[index] = protocol
+        # TODO assign streamhandler (self) to protocol
+
+    def receive_message(self, bs):
+        if (len(bs) < 1):
+            raise Exception("Invalid message, missing protocol")
+        pid = bs[0]
+        if pid not in self.protocols:
+            raise Exception("Unknown protocol: %s" % pid)
+        self.protocols[pid].receive_message(bs[1:])

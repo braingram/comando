@@ -24,9 +24,9 @@ print("\t<- from computer, -> = from arduino")
 def show(bs):
     print("->%r" % bs)
 
-h.on_message = show
+h.receive_message = show
 
 for msg in ('\x00', '\x01', '\x02'):
     print("<-%r" % msg)
-    h.write(msg)
-    h.read()
+    h.send_message(msg)
+    h.handle_stream()
