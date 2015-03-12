@@ -60,7 +60,7 @@ class EchoProtocol: public Protocol {
 class CommandProtocol: public Protocol {
   protected:
     byte arg_index;
-    byte arg_buffer[MAX_MSG_LENGTH];  // for sending
+    byte arg_buffer[MAX_MSG_LENGTH];  // for receiving
     byte arg_buffern;
     callback_function callbacks[MAX_CALLBACKS];
   public:
@@ -69,14 +69,15 @@ class CommandProtocol: public Protocol {
     void register_callback(byte index, callback_function callback);
     void start_command(byte cid);
     template <typename T> void add_arg(T arg) {
-      build_message((byte *) &arg, sizeof(arg));
+      build_message((byte *) &arg, sizeof(T));
     };
     void finish_command();
     void send_command(byte cid);
     template <typename T> T get_arg() {
-      // TODO
       T value;
-      sizeof(value);
+      memcpy((byte *)&value, arg_buffer+arg_index, sizeof(T));
+      arg_index += sizeof(T);
+      return value;
     };
 };
 
@@ -105,6 +106,8 @@ class Comando {
     void on_message(callback_function message_handler);
     void on_error(callback_function error_handler);
     void handle_stream();
+
+    void error(char *buffer);
 
     void send_message(byte *buffer, byte n);
     void send_message(byte *buffer);

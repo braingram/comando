@@ -22,8 +22,12 @@ from .base import Protocol
 # type: (pack[function], unpack)
 # pack/unpack: (bytes_consumed, function)
 types = {
-    bool: (chr, lambda bs: (1, struct.unpack('<?', bs[0])[0])),
-    chr: (chr, lambda bs: (1, struct.unpack('<c', bs[0])[0])),
+    bool: (
+        lambda v: struct.pack('<?', v),
+        lambda bs: (1, struct.unpack('<?', bs[0])[0])),
+    chr: (
+        lambda v: struct.pack('<c', v),
+        lambda bs: (1, struct.unpack('<c', bs[0])[0])),
     ctypes.c_int16: (
         lambda v: struct.pack('<h', v),
         lambda bs: (2, struct.unpack('<h', bs[:2])[0])),
@@ -98,6 +102,7 @@ class CommandProtocol(Protocol):
         if t not in types:
             raise Exception("Unknown argument type: %s" % t)
         self.send_arg_string += types[t][0](v)
+        #print("%r %r %r" % (v, t, self.send_arg_string))
 
     def finish_command(self):
         self.send_message(self.send_arg_string)

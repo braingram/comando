@@ -25,32 +25,34 @@ com.register_protocol(1, cmd)
 
 
 def show(bs):
-    print("->%r" % bs)
+    print("[echo]->%r" % bs)
 
 
 def no_arg(cmd):
-    print("->no_arg")
+    print("[cmd]->no_arg")
 
 
 def bool_arg(cmd):
-    print("->bool_arg %s, %s" % (cmd.get_arg(bool), cmd.get_arg(bool)))
+    print("[cmd]->bool_arg: args...")
+    for i in xrange(2):
+        print("\t%s: %s" % (i, cmd.get_arg(bool)))
 
 
 def chr_arg(cmd):
-    print("->chr_arg: args...")
+    print("[cmd]->chr_arg: args...")
     for i in xrange(5):
         c = cmd.get_arg(chr)
         print("\t%s: %s[%r]" % (i, ord(c), c))
 
 
 def int_arg(cmd):
-    print("->int_arg: args...")
+    print("[cmd]->int_arg: args...")
     for i in xrange(5):
         print("\t%s: %s" % (i, cmd.get_arg(int)))
 
 
 def float_arg(cmd):
-    print("->float_arg: args...")
+    print("[cmd]->float_arg: args...")
     for i in xrange(5):
         print("\t%s: %s" % (i, cmd.get_arg(float)))
 
@@ -65,11 +67,26 @@ cmd.register_callback(4, float_arg)
 print("\t<- from computer, -> = from arduino")
 
 for msg in ('hi', 'how are you'):
-    print("<-%r" % msg)
+    print("[text]<-%r" % msg)
     text.send_message(msg)
     com.handle_stream()
 
 
-for cid in (0, 1, 2, 3, 4):
-    cmd.send_command(cid)
-    com.handle_stream()
+cmds = [
+    (0, ()),
+    (1, (True, False)),
+    (2, ('\r', '\n', 'a', 'Z', '\x00')),
+    (3, (0, 1, -1, 1000000, -1000000)),
+    (4, (0.0, 1.0, -1.0, 1.23, -123.0)),
+]
+
+print
+for (cid, args) in cmds:
+    if len(args) == 0:
+        args = None
+    print
+    print("[cmd]<- %s [%s]" % (cid, args))
+    cmd.send_command(cid, args)
+    time.sleep(0.5)
+    while port.inWaiting():
+        com.handle_stream()

@@ -176,6 +176,9 @@ void Comando::handle_stream() {
   };
 };
 
+void Comando::error(char *buffer) {
+};
+
 void Comando::send_message(byte *buffer, byte n) {
   stream->write(n);
   stream->write(buffer, n);
