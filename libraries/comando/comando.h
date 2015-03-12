@@ -90,12 +90,10 @@ class Comando {
     byte read_state;
     Stream *stream;
     callback_function message_callback;
-    callback_function error_callback;
     Protocol *protocols[MAX_PROTOCOLS];
 
     void receive_byte(byte b);
     virtual void default_message_callback();
-    virtual void default_error_callback();
 
   public:
     Comando(Stream & communication_stream);
@@ -103,11 +101,8 @@ class Comando {
     void register_protocol(byte index, Protocol & protocol);
 
     void reset();
-    void on_message(callback_function message_handler);
-    void on_error(callback_function error_handler);
-    void handle_stream();
-
-    void error(char *buffer);
+    void register_message_callback(callback_function message_handler);
+    void unregister_message_callback();
 
     void send_message(byte *buffer, byte n);
     void send_message(byte *buffer);
@@ -119,6 +114,8 @@ class Comando {
     byte* get_bytes();
     byte get_n_bytes();
     byte get_checksum();
+
+    void handle_stream();
 };
 
 #endif

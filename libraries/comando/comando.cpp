@@ -107,13 +107,10 @@ void Comando::receive_byte(byte b) {
       byte_index = 0; // reset byte_index for reading
       cs = b;
       if (cs != compute_checksum(bytes, n_bytes)) {
-        if (error_callback != NULL) {
-          (*error_callback)();
-        } else {
-          default_error_callback();
-        };
+        // TODO error
       } else {
         if (message_callback != NULL) {
+          // TODO should the return value determine if default is called?
           (*message_callback)();
         } else {
           default_message_callback();
@@ -140,15 +137,10 @@ void Comando::default_message_callback() {
   };
 };
 
-void Comando::default_error_callback() {
-  send_message("error");
-};
-
 
 Comando::Comando(Stream & communication_stream) {
   stream = &communication_stream;
   message_callback = NULL;
-  error_callback = NULL;
   for (byte i=0; i<MAX_PROTOCOLS; i++) {
     protocols[i] = NULL;
   };
@@ -162,21 +154,18 @@ void Comando::reset() {
   read_state = WAITING;
 };
 
-void Comando::on_message(callback_function message_handler) {
+void Comando::register_message_callback(callback_function message_handler) {
   message_callback = message_handler;
 };
 
-void Comando::on_error(callback_function error_handler) {
-  error_callback = error_handler;
+void Comando::unregister_message_callback() {
+  message_callback = NULL;
 };
 
 void Comando::handle_stream() {
   while (stream->available()) {
     receive_byte(stream->read());
   };
-};
-
-void Comando::error(char *buffer) {
 };
 
 void Comando::send_message(byte *buffer, byte n) {
