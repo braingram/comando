@@ -54,17 +54,18 @@ class ProtocolHandler(StreamHandler):
         StreamHandler.__init__(self, stream)
         self.protocols = {}
         if protocols is not None:
-            [self.add_protocol(i, p) for (i, p) in enumerate(protocols)]
+            [self.register_protocol(i, p) for (i, p) in enumerate(protocols)]
 
-    def add_protocol(self, index, protocol):
+    def register_protocol(self, index, protocol):
         # TODO check protocol
         self.protocols[index] = protocol
-        # TODO assign streamhandler (self) to protocol
+        protocol.assign_comm(self)
+        protocol.index = index
 
     def receive_message(self, bs):
         if (len(bs) < 1):
             raise Exception("Invalid message, missing protocol")
-        pid = bs[0]
+        pid = ord(bs[0])
         if pid not in self.protocols:
             raise Exception("Unknown protocol: %s" % pid)
         self.protocols[pid].receive_message(bs[1:])

@@ -22,23 +22,23 @@ from .base import Protocol
 # type: (pack[function], unpack)
 # pack/unpack: (bytes_consumed, function)
 types = {
-    bool: (chr, lambda bs: (1, chr(bs[0]))),
-    chr: (chr, lambda bs: (1, bs[0])),
+    bool: (chr, lambda bs: (1, struct.unpack('<?', bs[0])[0])),
+    chr: (chr, lambda bs: (1, struct.unpack('<c', bs[0])[0])),
     ctypes.c_int16: (
         lambda v: struct.pack('<h', v),
-        lambda bs: (2, struct.unpack('<h', bs[:2]))),
+        lambda bs: (2, struct.unpack('<h', bs[:2])[0])),
     ctypes.c_uint16: (
         lambda v: struct.pack('<H', v),
-        lambda bs: (2, struct.unpack('<H', bs[:2]))),
+        lambda bs: (2, struct.unpack('<H', bs[:2])[0])),
     ctypes.c_int32: (
         lambda v: struct.pack('<i', v),
-        lambda bs: (4, struct.unpack('<i', bs[:2]))),
+        lambda bs: (4, struct.unpack('<i', bs[:4])[0])),
     ctypes.c_uint32: (
         lambda v: struct.pack('<I', v),
-        lambda bs: (4, struct.unpack('<I', bs[:2]))),
+        lambda bs: (4, struct.unpack('<I', bs[:4])[0])),
     float: (
         lambda v: struct.pack('<f', v),
-        lambda bs: (4, struct.unpack('<f', bs[:2]))),
+        lambda bs: (4, struct.unpack('<f', bs[:4])[0])),
     str: (
         str,
         lambda bs: (bs[0], bs[1:1+ord(bs[0])])),
@@ -56,6 +56,10 @@ class CommandProtocol(Protocol):
         self.received_arg_string_index = 0
         self.send_arg_string = ""
         self.commands = {}
+        self.callbacks = {}
+
+    def register_callback(self, cid, func):
+        self.callbacks[cid] = func
 
     def get_arg(self, t):
         if t not in types:
@@ -64,11 +68,9 @@ class CommandProtocol(Protocol):
         if len(s) == 0:
             raise Exception("Received argstring is empty")
         n, v = types[t][1](s)
+        #print("\t\t%s -> %s" % (map(ord, s), v))
         self.received_arg_string_index += n
         return v
-
-    def add_command(self, cid, function):
-        self.commands[cid] = function
 
     def receive_message(self, bs):
         # byte 0 = command, ....
@@ -76,7 +78,12 @@ class CommandProtocol(Protocol):
             raise Exception("Invalid empty command message")
         self.received_arg_string = bs[1:]
         self.received_arg_string_index = 0
-        self.commands[ord(bs[0])](self)
+        cid = ord(bs[0])
+        if cid in self.callbacks:
+            self.callbacks[cid](self)
+        else:
+            pass  # TODO error?
+        #self.commands[ord(bs[0])](self)
 
     def start_command(self, cid):
         if len(self.send_arg_string) != 0:
@@ -92,12 +99,14 @@ class CommandProtocol(Protocol):
             raise Exception("Unknown argument type: %s" % t)
         self.send_arg_string += types[t][0](v)
 
-    def send_command(self, cid=None, args=None):
-        if cid is not None:
-            self.start_command(cid)
-        if args is not None:
-            [self.add_arg(a) for a in args]
+    def finish_command(self):
         self.send_message(self.send_arg_string)
         self.send_arg_string = ""
+
+    def send_command(self, cid, args=None):
+        self.start_command(cid)
+        if args is not None:
+            [self.add_arg(a) for a in args]
+        self.finish_command()
 
 # TODO namespace

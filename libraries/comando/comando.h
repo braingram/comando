@@ -35,12 +35,20 @@ class Protocol {
   protected:
     Comando *cmdo;
     byte index;
+    byte buffer[MAX_MSG_LENGTH];  // for sending
+    byte buffern;
   public:
     Protocol(Comando & bcmdo);
+    virtual void start_message();
+    virtual void build_message(byte *bytes, byte n_bytes);
+    virtual void finish_message();
     virtual void send_message(byte *bytes, byte n_bytes);
     virtual void receive_message(byte *bytes, byte n_bytes);
     void set_index(byte i);
     byte get_index();
+};
+
+class TextProtocol: public Protocol {
 };
 
 class EchoProtocol: public Protocol {
@@ -49,12 +57,27 @@ class EchoProtocol: public Protocol {
     void receive_message(byte *bytes, byte n_bytes);
 };
 
-class CmdProtocol: public Protocol {
+class CommandProtocol: public Protocol {
   protected:
+    byte arg_index;
+    byte arg_buffer[MAX_MSG_LENGTH];  // for sending
+    byte arg_buffern;
     callback_function callbacks[MAX_CALLBACKS];
   public:
-    CmdProtocol(Comando & bcmdo);
+    CommandProtocol(Comando & bcmdo);
     void receive_message(byte *bytes, byte n_bytes);
+    void register_callback(byte index, callback_function callback);
+    void start_command(byte cid);
+    template <typename T> void add_arg(T arg) {
+      build_message((byte *) &arg, sizeof(arg));
+    };
+    void finish_command();
+    void send_command(byte cid);
+    template <typename T> T get_arg() {
+      // TODO
+      T value;
+      sizeof(value);
+    };
 };
 
 class Comando {
@@ -95,59 +118,4 @@ class Comando {
     byte get_checksum();
 };
 
-/*
-class Comando: public Comando {
-  protected:
-    void default_message_callback();
-    void default_error_callback();
-    callback_function callbacks[MAX_CALLBACKS];
-    // TODO unknown callback?
-  public:
-    Comando(Stream & communication_stream);
-
-    void attach(byte cmd_id, callback_function callback);
-    template <class T> T read_arg() {
-      byte n = sizeof(T);
-      T result;
-      if (byte_index + n < n_bytes) {
-        memcpy(&result, bytes + byte_index, n);
-        byte_index += n;
-      } else {
-        // TODO error, attempt to read too many args
-      };
-      return result;
-    };
-    // TODO functions to pack args
-};
-
-class Commander {
-  protected:
-    Comando *cmdo;
-    byte byte_index;
-    byte *bytes;
-    byte n_bytes;
-    callback_function error_callback;
-    callback_function callbacks[MAX_CALLBACKS];
-  public:
-    Commander(Comando &bcmdo);
-
-    void error();
-    void receive_message(byte *bytes, byte n_bytes);
-    void receive_message(byte *bytes);
-    void attach(byte cmd_id, callback_function callback);
-
-    template <class T> T read_arg() {
-      byte n = sizeof(T);
-      T result;
-      if (byte_index + n < n_bytes) {
-        memcpy(&result, bytes + byte_index, n);
-        byte_index += n;
-      } else {
-        error();
-      };
-      return result;
-    };
-    // TODO functions to pack args
-};
-*/
 #endif

@@ -1,9 +1,9 @@
 #include <comando.h>
 
 byte compute_checksum(byte *bytes, byte n) {
-    byte cs = 0;
-    for (byte i=0; i<n; i++) cs += bytes[i];
-    return cs;
+  byte cs = 0;
+  for (byte i=0; i<n; i++) cs += bytes[i];
+  return cs;
 };
 
 
@@ -19,8 +19,27 @@ byte Protocol::get_index() {
   return index;
 };
 
+
+void Protocol::start_message() {
+  buffer[0] = index;
+  buffern = 1;
+};
+
+void Protocol::build_message(byte *bytes, byte n_bytes) {
+  // copy bytes in buffer[buffern:buffern+n_bytes]
+  memcpy(buffer+buffern, bytes, n_bytes);
+  buffern += n_bytes;
+};
+
+void Protocol::finish_message() {
+  cmdo->send_message(buffer, buffern);
+};
+
 void Protocol::send_message(byte *bytes, byte n_bytes) {
-  cmdo->send_message(bytes, n_bytes);
+  start_message();
+  build_message(bytes, n_bytes);
+  finish_message();
+  //cmdo->send_message(bytes, n_bytes);
 };
 
 void Protocol::receive_message(byte *bytes, byte n_bytes) {
@@ -30,26 +49,50 @@ void Protocol::receive_message(byte *bytes, byte n_bytes) {
 EchoProtocol::EchoProtocol(Comando & bcmdo): Protocol(bcmdo) {};
 
 void EchoProtocol::receive_message(byte *bytes, byte n_bytes) {
-  // TODO add protocol index, or should this be done elsewhere?
   send_message(bytes, n_bytes);
 };
 
-// =============== CmdProtocol ============
-CmdProtocol::CmdProtocol(Comando & bcmdo): Protocol(bcmdo) {
+// =============== CommandProtocol ============
+CommandProtocol::CommandProtocol(Comando & bcmdo): Protocol(bcmdo) {
   for(byte i=0; i<MAX_CALLBACKS; i++) {
     callbacks[i] = NULL;
   };
 };
 
-void CmdProtocol::receive_message(byte *bytes, byte n_bytes) {
+void CommandProtocol::receive_message(byte *bytes, byte n_bytes) {
   if (n_bytes == 0) {
     // TODO error
   };
   if (callbacks[bytes[0]] == NULL) {
     // TODO error
   } else {
+    arg_index = 0;
+    if (n_bytes > 1) {
+      arg_buffern = n_bytes - 1;
+      memcpy(arg_buffer, bytes+1, arg_buffern);
+    } else {
+      arg_buffern = 0;
+    };
     (*callbacks[bytes[0]])();
   };
+};
+
+void CommandProtocol::register_callback(byte index, callback_function callback) {
+  callbacks[index] = callback;
+};
+
+void CommandProtocol::start_command(byte cid) {
+  start_message();
+  build_message(&cid, 1);
+};
+
+void CommandProtocol::finish_command() {
+  finish_message();
+};
+
+void CommandProtocol::send_command(byte cid) {
+  start_command(cid);
+  finish_command();
 };
 
 // ================= Comando ==========
@@ -177,72 +220,8 @@ byte Comando::get_checksum() {
 void Comando::register_protocol(byte index, Protocol & protocol) {
   if (index < MAX_PROTOCOLS) {
     protocols[index] = &protocol;
+    protocol.set_index(index);
   } else {
     // TODO error
   };
 };
-
-/*
-Comando::Comando(Stream & communication_stream): Comando(communication_stream) {
-  for(byte i=0; i<MAX_CALLBACKS; i++) {
-    callbacks[i] = NULL;
-  };
-};
-
-void Comando::default_message_callback() {
-  if (n_bytes == 0) {
-    // TODO error
-  };
-  if (callbacks[bytes[0]] == NULL) {
-    // TODO error
-  } else {
-    (*callbacks[bytes[0]])();
-  };
-};
-
-void Comando::default_error_callback() {
-};
-
-void Comando::attach(byte cmd_id, callback_function callback) {
-  callbacks[cmd_id] = callback;
-};
-
-Commander::Commander(Comando &bcmdo) {
-  cmdo = bcmdo;
-  for(byte i=0; i<MAX_CALLBACKS; i++) {
-    callbacks[i] = NULL;
-  };
-  error_callback = NULL;
-  cmdo->on_message(receive_message);
-};
-
-void Commander::error() {
-  if (error_callback != NULL) {
-    (*error_callback)();
-  };
-};
-
-void Commander::receive_message(byte *msg_bytes, byte msg_n_bytes) {
-  n_bytes = msg_n_bytes;
-  bytes = msg_bytes;
-  byte_index = 0;
-  if (n_bytes == 0) error();
-  if (callbacks[bytes[0]] == NULL) {
-    error();
-  } else {
-    (*callbacks[bytes[0]])();
-  };
-};
-
-void Commander::receive_message(byte *bytes) {
-  receive_message(bytes, strlen((char *)bytes));
-};
-
-void Commander::receive_message() {
-  receive_message(cmdo->get_bytes(), cmdo->get_n_bytes());
-};
-
-void Commander::attach(byte cmd_id, callback_function callback) {
-  callbacks[cmd_id] = callback;
-};
-*/
