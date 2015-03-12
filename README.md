@@ -1,3 +1,98 @@
+Comando... Command your arduino!
+
+## Inspiration
+
+How many times have you written a 'simple' protocol for communicating with
+an Arduino that turned into anything but 'simple'? This project is meant to
+solve a few goals
+
+1. make calling commands on an arduino from a computer (and vice versa) easy
+2. remove the need to write serial protocols for transferring common datatypes
+3. allow simultaneuous use of multiple protocols (e.g. debug and command)
+
+The initial inspiration came from an attempt to use cmdmessenger and finding
+it difficult to send simple datatypes (i.e. floats).
+
+## Overview
+
+You have two devices: 1 running python, and an arduino. You want these to:
+
+1. call commands on the other one
+2. transfer data
+
+This communication happens over a stream (e.g. serial port), and will follow
+some structure (a protocol) that defines how data (i.e. messages) are
+organized. This structure is mirrored in comando.
+
+## Streams
+
+A stream is the conduit through which messages are passed between python and
+the arduino. So far, this is a serial port but could be anything that allows
+passing bytes back and forth (i.e. has read, write).
+
+You can follow along with the simple example in: tests/01\_simple
+
+```python
+# create and setup the device you will use for communication
+port = serial.Serial('/dev/ttyACM0', 9600)
+# create a handler for this device/stream
+com = pycomando.handlers.StreamHandler(port)
+```
+
+```c
+// create the communication device
+Serial.begin(9600);
+// create a handler for this device/stream
+Comando com = Comando(Serial);
+```
+
+These stream handles can send/receive messages. However it's probably better
+to use a protocol!
+
+```python
+# send a message to the arduino
+com.send_message("hi!")
+
+
+def show(bytes):
+    print(bytes)
+
+
+# just print out received messages
+com.receive_message = show
+```
+
+```c
+// send a message to python
+com.send_message("hi");
+
+
+void show() {
+  // send the message back to python
+  com.send_message(com.get_bytes(), com.get_n_bytes());
+
+// call show when a message is received
+com.on_message(show);
+```
+
+For messages to be sent/recieved, the device has to have a chance to "handle"
+the stream.
+
+```python
+com.handle_stream()
+```
+
+```c
+com.handle_stream();
+```
+
+## Protocols
+
+
+## Messages
+
+An arduino library and python module for communicating between python and an arduino.
+
 A (working) alternative to cmdmessenger.
 
 Message format: length in bytes 0-255,byte0,byte1...byteN-1,checksum
