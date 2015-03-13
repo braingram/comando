@@ -14,13 +14,27 @@
 #include <WProgram.h> 
 #endif
 
+
+class Comando;
+class Protocol;
+class CommandProtocol;
+
 extern "C" {
   typedef void (*callback_function) (void);
+  typedef void (*command_callback) (CommandProtocol *protocol);
 }
 
 #define MAX_MSG_LENGTH 255
 #define MAX_CALLBACKS 50
 #define MAX_PROTOCOLS 10
+
+#define LOG_DEBUG 10
+#define LOG_INFO 20
+#define LOG_WARN 30
+#define LOG_WARNING 30
+#define LOG_ERROR 40
+#define LOG_CRITICAL 50
+#define LOG_FATAL 50
 
 byte compute_checksum(byte *bytes, byte n);
 
@@ -28,8 +42,6 @@ enum {
   READING,
   WAITING,
 };
-
-class Comando;
 
 class Protocol {
   protected:
@@ -57,16 +69,30 @@ class EchoProtocol: public Protocol {
     void receive_message(byte *bytes, byte n_bytes);
 };
 
+class LogProtocol: public Protocol {
+  public:
+    LogProtocol(Comando & bcmdo);
+    void log(byte level, char *msg);
+    void debug(char *msg);
+    void info(char *msg);
+    void warn(char *msg);
+    void warning(char *msg);
+    void error(char *msg);
+    void critical(char *msg);
+    void fatal(char *msg);
+};
+
+
 class CommandProtocol: public Protocol {
   protected:
     byte arg_index;
     byte arg_buffer[MAX_MSG_LENGTH];  // for receiving
     byte arg_buffern;
-    callback_function callbacks[MAX_CALLBACKS];
+    command_callback callbacks[MAX_CALLBACKS];
   public:
     CommandProtocol(Comando & bcmdo);
     void receive_message(byte *bytes, byte n_bytes);
-    void register_callback(byte index, callback_function callback);
+    void register_callback(byte index, command_callback callback);
     void start_command(byte cid);
     template <typename T> void add_arg(T arg) {
       build_message((byte *) &arg, sizeof(T));

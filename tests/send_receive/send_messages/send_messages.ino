@@ -9,31 +9,31 @@ Comando com = Comando(Serial);
 EchoProtocol echo = EchoProtocol(com);
 CommandProtocol cmd = CommandProtocol(com);
 
-void no_arg(){
-  cmd.send_command(0);
+void no_arg(CommandProtocol* cmd){
+  cmd->send_command(0);
 };
 
-void bool_arg(){
+void bool_arg(CommandProtocol* cmd){
   echo.send_message(com.get_bytes(), com.get_n_bytes());
   // send some test bools to see if they are received correctly
-  cmd.start_command(1);
-  if(cmd.get_arg<boolean>() == true) {
-    cmd.add_arg(true);
+  cmd->start_command(1);
+  if(cmd->get_arg<boolean>() == true) {
+    cmd->add_arg(true);
   } else {
-    cmd.add_arg(false);
+    cmd->add_arg(false);
   };
-  if(cmd.get_arg<boolean>() == false) {
-    cmd.add_arg(false);
+  if(cmd->get_arg<boolean>() == false) {
+    cmd->add_arg(false);
   } else {
-    cmd.add_arg(true);
+    cmd->add_arg(true);
   };
-  cmd.finish_command();
+  cmd->finish_command();
 };
 
-void chr_arg(){
+void chr_arg(CommandProtocol* cmd){
   echo.send_message(com.get_bytes(), com.get_n_bytes());
   // send some test chars to see if they are received correctly
-  cmd.start_command(2);
+  cmd->start_command(2);
   /*
   char c = cmd.get_arg<char>();
   echo.send_message((byte *)&c, 1);
@@ -43,103 +43,103 @@ void chr_arg(){
     cmd.add_arg('e');
   };
   */
-  if(cmd.get_arg<char>() == '\r') {
-    cmd.add_arg('\r');
+  if(cmd->get_arg<char>() == '\r') {
+    cmd->add_arg('\r');
   } else {
-    cmd.add_arg('e');
+    cmd->add_arg('e');
   };
-  if(cmd.get_arg<char>() == '\n') {
-    cmd.add_arg('\n');
+  if(cmd->get_arg<char>() == '\n') {
+    cmd->add_arg('\n');
   } else {
-    cmd.add_arg('e');
+    cmd->add_arg('e');
   };
-  if(cmd.get_arg<char>() == 'a') {
-    cmd.add_arg('a');
+  if(cmd->get_arg<char>() == 'a') {
+    cmd->add_arg('a');
   } else {
-    cmd.add_arg('e');
+    cmd->add_arg('e');
   };
-  if(cmd.get_arg<char>() == 'Z') {
-    cmd.add_arg('Z');
+  if(cmd->get_arg<char>() == 'Z') {
+    cmd->add_arg('Z');
   } else {
-    cmd.add_arg('e');
+    cmd->add_arg('e');
   };
-  if(cmd.get_arg<char>() == '\0') {
-    cmd.add_arg('\0');
+  if(cmd->get_arg<char>() == '\0') {
+    cmd->add_arg('\0');
   } else {
-    cmd.add_arg('e');
+    cmd->add_arg('e');
   };
-  cmd.finish_command();
+  cmd->finish_command();
 };
 
-void int_arg(){
+void int_arg(CommandProtocol *cmd){
   echo.send_message(com.get_bytes(), com.get_n_bytes());
   // send some test ints to see if they are received correctly
-  cmd.start_command(3);
-  if (cmd.get_arg<long>() == 0) {
-    cmd.add_arg(0L);
+  cmd->start_command(3);
+  if (cmd->get_arg<long>() == 0) {
+    cmd->add_arg(0L);
   } else {
-    cmd.add_arg(2L);
+    cmd->add_arg(2L);
   };
-  if (cmd.get_arg<long>() == 1) {
-    cmd.add_arg(1L);
+  if (cmd->get_arg<long>() == 1) {
+    cmd->add_arg(1L);
   } else {
-    cmd.add_arg(2L);
+    cmd->add_arg(2L);
   };
-  if (cmd.get_arg<long>() == -1) {
-    cmd.add_arg(-1L);
+  if (cmd->get_arg<long>() == -1) {
+    cmd->add_arg(-1L);
   } else {
-    cmd.add_arg(2L);
+    cmd->add_arg(2L);
   };
-  if (cmd.get_arg<long>() == 1000000) {
-    cmd.add_arg(1000000L);
+  if (cmd->get_arg<long>() == 1000000) {
+    cmd->add_arg(1000000L);
   } else {
-    cmd.add_arg(2L);
+    cmd->add_arg(2L);
   };
-  if (cmd.get_arg<long>() == -1000000) {
-    cmd.add_arg(-1000000L);
+  if (cmd->get_arg<long>() == -1000000) {
+    cmd->add_arg(-1000000L);
   } else {
-    cmd.add_arg(2L);
+    cmd->add_arg(2L);
   };
-  cmd.finish_command();
+  cmd->finish_command();
 };
 
-void float_arg(){
+void float_arg(CommandProtocol *cmd){
   echo.send_message(com.get_bytes(), com.get_n_bytes());
   // send some test floats to see if they are received correctly
-  cmd.start_command(4);
+  cmd->start_command(4);
   float f;
-  f = cmd.get_arg<float>();
+  f = cmd->get_arg<float>();
   if (abs(f - 0.0) < 0.0001) {
-    cmd.add_arg(0.0f);
+    cmd->add_arg(0.0f);
   } else {
-    cmd.add_arg(2.0f);
+    cmd->add_arg(2.0f);
   };
-  f = cmd.get_arg<float>();
+  f = cmd->get_arg<float>();
   if (abs(f - 1.0) < 0.0001) {
-    cmd.add_arg(1.0f);
+    cmd->add_arg(1.0f);
   } else {
-    cmd.add_arg(2.0f);
+    cmd->add_arg(2.0f);
   };
-  f = cmd.get_arg<float>();
+  f = cmd->get_arg<float>();
   if (abs(f + 1.0) < 0.0001) {
-    cmd.add_arg(-1.0f);
+    cmd->add_arg(-1.0f);
   } else {
-    cmd.add_arg(2.0f);
+    cmd->add_arg(2.0f);
   };
-  f = cmd.get_arg<float>();
+  f = cmd->get_arg<float>();
   if (abs(f - 1.23) < 0.01) {
-    cmd.add_arg(1.23f);
+    cmd->add_arg(1.23f);
   } else {
-    cmd.add_arg(2.0f);
+    cmd->add_arg(2.0f);
   };
   
-  f = cmd.get_arg<float>();
+  f = cmd->get_arg<float>();
   if (abs(f + 123.0) < 0.01) {
-    cmd.add_arg(-123.0f);
+    cmd->add_arg(-123.0f);
   } else {
-    cmd.add_arg(2.0f);
+    cmd->add_arg(2.0f);
   };
-  cmd.finish_command();
+  cmd->finish_command();
 };
 
 void setup() {

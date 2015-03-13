@@ -50,6 +50,44 @@ void EchoProtocol::receive_message(byte *bytes, byte n_bytes) {
   send_message(bytes, n_bytes);
 };
 
+// =============== LogProtocol ============
+LogProtocol::LogProtocol(Comando & bcmdo): Protocol(bcmdo) {};
+
+void LogProtocol::log(byte level, char *msg){
+  start_message();
+  build_message(&level, 1);
+  build_message((byte *)msg, strlen(msg));
+  finish_message();
+};
+
+void LogProtocol::debug(char *msg){
+  log(LOG_DEBUG, msg);
+};
+
+void LogProtocol::info(char *msg){
+  log(LOG_INFO, msg);
+};
+
+void LogProtocol::warn(char *msg){
+  log(LOG_WARN, msg);
+};
+
+void LogProtocol::warning(char *msg){
+  log(LOG_WARNING, msg);
+};
+
+void LogProtocol::error(char *msg){
+  log(LOG_ERROR, msg);
+};
+
+void LogProtocol::critical(char *msg){
+  log(LOG_CRITICAL, msg);
+};
+
+void LogProtocol::fatal(char *msg){
+  log(LOG_FATAL, msg);
+};
+
 // =============== CommandProtocol ============
 CommandProtocol::CommandProtocol(Comando & bcmdo): Protocol(bcmdo) {
   for(byte i=0; i<MAX_CALLBACKS; i++) {
@@ -71,11 +109,11 @@ void CommandProtocol::receive_message(byte *bytes, byte n_bytes) {
     } else {
       arg_buffern = 0;
     };
-    (*callbacks[bytes[0]])();
+    (*callbacks[bytes[0]])(this);
   };
 };
 
-void CommandProtocol::register_callback(byte index, callback_function callback) {
+void CommandProtocol::register_callback(byte index, command_callback callback) {
   callbacks[index] = callback;
 };
 
