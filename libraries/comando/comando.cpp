@@ -26,7 +26,6 @@ void Protocol::start_message() {
 };
 
 void Protocol::build_message(byte *bytes, byte n_bytes) {
-  // copy bytes in buffer[buffern:buffern+n_bytes]
   memcpy(buffer+buffern, bytes, n_bytes);
   buffern += n_bytes;
 };
@@ -39,7 +38,6 @@ void Protocol::send_message(byte *bytes, byte n_bytes) {
   start_message();
   build_message(bytes, n_bytes);
   finish_message();
-  //cmdo->send_message(bytes, n_bytes);
 };
 
 void Protocol::receive_message(byte *bytes, byte n_bytes) {
@@ -61,10 +59,10 @@ CommandProtocol::CommandProtocol(Comando & bcmdo): Protocol(bcmdo) {
 
 void CommandProtocol::receive_message(byte *bytes, byte n_bytes) {
   if (n_bytes == 0) {
-    // TODO error
+    cmdo->send_error("Received message without command number");
   };
   if (callbacks[bytes[0]] == NULL) {
-    // TODO error
+    cmdo->send_error("Received message for unknown command number");
   } else {
     arg_index = 0;
     if (n_bytes > 1) {
@@ -98,7 +96,6 @@ void CommandProtocol::send_command(byte cid) {
 // ================= Comando ==========
 void Comando::receive_byte(byte b) {
   if (read_state == WAITING) {
-    // this is n
     n_bytes = b;
     byte_index = 0;
     read_state = READING;
@@ -107,7 +104,7 @@ void Comando::receive_byte(byte b) {
       byte_index = 0; // reset byte_index for reading
       cs = b;
       if (cs != compute_checksum(bytes, n_bytes)) {
-        // TODO error
+        send_error("Invalid checksum");
       } else {
         if (message_callback != NULL) {
           // TODO should the return value determine if default is called?
@@ -126,10 +123,10 @@ void Comando::receive_byte(byte b) {
 
 void Comando::default_message_callback() {
   if (n_bytes < 1) {
-    // TODO error
+    send_error("Received message without protocol number");
   } else {
     if (protocols[bytes[0]] == NULL) {
-      // TODO error
+      send_error("Received message for unknown protocol number");
     } else {
       Protocol *p = protocols[bytes[0]];
       p->receive_message(bytes+1, n_bytes-1);
@@ -141,6 +138,7 @@ void Comando::default_message_callback() {
 Comando::Comando(Stream & communication_stream) {
   stream = &communication_stream;
   message_callback = NULL;
+  error_protocol = -1;
   for (byte i=0; i<MAX_PROTOCOLS; i++) {
     protocols[i] = NULL;
   };
@@ -186,6 +184,16 @@ void Comando::send_message(char *buffer) {
   send_message(buffer, strlen(buffer));
 };
 
+void Comando::send_error(char *buffer, byte n) {
+  if (error_protocol != -1) {
+    protocols[error_protocol]->send_message((byte *) buffer, n);
+  };
+};
+
+void Comando::send_error(char *buffer) {
+  send_error(buffer, strlen(buffer));
+};
+
 byte Comando::copy_bytes(byte *buffer, byte n) {
   if (n < n_bytes) return 0;
   if (n_bytes == 0) return 0;
@@ -214,6 +222,10 @@ void Comando::register_protocol(byte index, Protocol & protocol) {
     protocols[index] = &protocol;
     protocol.set_index(index);
   } else {
-    // TODO error
+    send_error("Failed attempt to assign a too high protocol index");
   };
+};
+
+void Comando::set_error_protocol(int pid) {
+  error_protocol = pid;
 };

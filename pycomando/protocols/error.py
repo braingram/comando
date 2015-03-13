@@ -10,3 +10,4 @@ log = logging.getLogger(__name__)
 class ErrorProtocol(Protocol):
     def receive_message(self, bs):
         log.error(bs)
+        raise Exception(bs)

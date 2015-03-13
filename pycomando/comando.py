@@ -24,6 +24,7 @@ class Comando(object):
         self.stream = stream
         self.protocols = {}
         self.message_callback = None
+        self.error_protocol = -1
         if protocols is not None:
             [self.register_protocol(i, p) for (i, p) in enumerate(protocols)]
 
@@ -45,16 +46,22 @@ class Comando(object):
         self.receive_message(bs)
 
     def register_protocol(self, index, protocol):
-        # TODO check protocol
         self.protocols[index] = protocol
         protocol.assign_comm(self)
         protocol.index = index
+
+    def set_error_protocol(self, pid):
+        self.error_protocol = pid
 
     def register_message_callback(self, f):
         self.message_callback = f
 
     def unregister_message_callback(self, f):
         self.message_callback = None
+
+    def send_error(self, bs):
+        if self.error_protocol != -1:
+            self.protocols[self.error_protocol].send_message(bs)
 
     def send_message(self, bs):
         self.stream.write(build_message(bs))

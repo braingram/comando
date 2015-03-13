@@ -88,6 +88,7 @@ class Comando {
     byte bytes[MAX_MSG_LENGTH];
     byte cs;
     byte read_state;
+    int error_protocol;
     Stream *stream;
     callback_function message_callback;
     Protocol *protocols[MAX_PROTOCOLS];
@@ -99,6 +100,7 @@ class Comando {
     Comando(Stream & communication_stream);
 
     void register_protocol(byte index, Protocol & protocol);
+    void set_error_protocol(int pid);
 
     void reset();
     void register_message_callback(callback_function message_handler);
@@ -108,6 +110,9 @@ class Comando {
     void send_message(byte *buffer);
     void send_message(char *buffer, byte n);
     void send_message(char *buffer);
+
+    void send_error(char *buffer, byte n);
+    void send_error(char *buffer);
 
     byte copy_bytes(byte *buffer, byte n);
     byte copy_bytes(byte *buffer);

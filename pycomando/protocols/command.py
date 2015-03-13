@@ -1,16 +1,5 @@
 #!/usr/bin/env python
 """
-bool
-char
-uchar
-byte
-int16
-uint16
-int32
-uint32
-float
-char
-string
 """
 
 import ctypes
@@ -86,8 +75,8 @@ class CommandProtocol(Protocol):
         if cid in self.callbacks:
             self.callbacks[cid](self)
         else:
-            pass  # TODO error?
-        #self.commands[ord(bs[0])](self)
+            raise Exception(
+                "Received message for unknown command[%s]" % (cid))
 
     def start_command(self, cid):
         if len(self.send_arg_string) != 0:
@@ -102,7 +91,6 @@ class CommandProtocol(Protocol):
         if t not in types:
             raise Exception("Unknown argument type: %s" % t)
         self.send_arg_string += types[t][0](v)
-        #print("%r %r %r" % (v, t, self.send_arg_string))
 
     def finish_command(self):
         self.send_message(self.send_arg_string)
