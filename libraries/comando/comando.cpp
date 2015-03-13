@@ -131,6 +131,10 @@ void CommandProtocol::send_command(byte cid) {
   finish_command();
 };
 
+bool CommandProtocol::has_arg() {
+  return (arg_index < arg_buffern);
+};
+
 // ================= Comando ==========
 void Comando::receive_byte(byte b) {
   if (read_state == WAITING) {

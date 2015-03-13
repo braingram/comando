@@ -54,7 +54,12 @@ class CommandProtocol(Protocol):
     def register_callback(self, cid, func):
         self.callbacks[cid] = func
 
+    def has_arg(self):
+        return self.received_arg_string_index < len(self.received_arg_string)
+
     def get_arg(self, t):
+        if not self.has_arg():
+            return Exception("Attempt to get_arg when no arg was available")
         if t not in types:
             raise Exception("Unknown argument type: %s" % t)
         s = self.received_arg_string[self.received_arg_string_index:]

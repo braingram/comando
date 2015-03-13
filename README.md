@@ -238,6 +238,8 @@ void some_function(CommandProtocol *cmd) {
 };
 ```
 
+You can also check if an arg is available by calling has\_arg.
+
 Sending arguments follows a similar syntax.
 
 ```python

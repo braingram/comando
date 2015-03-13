@@ -99,7 +99,9 @@ class CommandProtocol: public Protocol {
     };
     void finish_command();
     void send_command(byte cid);
+    bool has_arg();
     template <typename T> T get_arg() {
+      if (!has_arg()) return NULL;
       T value;
       memcpy((byte *)&value, arg_buffer+arg_index, sizeof(T));
       arg_index += sizeof(T);
