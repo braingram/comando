@@ -28,7 +28,11 @@ class Comando(object):
         if protocols is not None:
             [self.register_protocol(i, p) for (i, p) in enumerate(protocols)]
 
-    def handle_stream(self):
+    def handle_stream(self, poll=True):
+        if poll and hasattr(self.stream, 'inWaiting'):
+            while self.stream.inWaiting():
+                self.handle_stream()
+            return
         n = ord(self.stream.read(1))
         if n != '\x00':
             bs = self.stream.read(n)
