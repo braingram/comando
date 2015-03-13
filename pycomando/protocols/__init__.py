@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-from . import command
-from . import echo
-from . import error
-from . import log
-from . import text
+from .command import CommandProtocol
+from .echo import EchoProtocol
+from .error import ErrorProtocol
+from .log import LogProtocol
+from .text import TextProtocol
 
-__all__ = ['command', 'echo', 'error', 'log', 'text']
+__all__ = [
+    'CommandProtocol', 'EchoProtocol', 'ErrorProtocol', 'LogProtocol',
+    'TextProtocol']

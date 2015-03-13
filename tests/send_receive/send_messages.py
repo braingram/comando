@@ -16,9 +16,9 @@ time.sleep(1)  # wait for arduino
 port.setDTR(level=0)
 time.sleep(1)
 
-com = pycomando.handlers.ProtocolHandler(port)
-text = pycomando.protocols.text.TextProtocol(com)
-cmd = pycomando.protocols.command.CommandProtocol(com)
+com = pycomando.Comando(port)
+text = pycomando.protocols.TextProtocol(com)
+cmd = pycomando.protocols.CommandProtocol(com)
 
 com.register_protocol(0, text)
 com.register_protocol(1, cmd)
