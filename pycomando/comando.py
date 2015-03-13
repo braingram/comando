@@ -31,7 +31,7 @@ class Comando(object):
     def handle_stream(self, poll=True):
         if poll and hasattr(self.stream, 'inWaiting'):
             while self.stream.inWaiting():
-                self.handle_stream()
+                self.handle_stream(poll=False)
             return
         n = ord(self.stream.read(1))
         if n != '\x00':
