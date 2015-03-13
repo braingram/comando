@@ -13,6 +13,18 @@ solve a few goals
 The initial inspiration came from an attempt to use cmdmessenger and finding
 it difficult to send simple datatypes (i.e. floats).
 
+
+## Install
+
+To install the python library run
+
+```
+python setup.py install
+```
+
+To install the arduino library, copy libraries/comando to wherever your
+arduino libraries are located (~/sketchbook/libraries on linux).
+
 ## Overview
 
 You have two devices: 1 running python, and an arduino. You want these to:
@@ -37,7 +49,7 @@ You can follow along with the simple example in: tests/01\_simple
 # create and setup the device you will use for communication
 port = serial.Serial('/dev/ttyACM0', 9600)
 # create a handler for this device/stream
-com = pycomando.handlers.StreamHandler(port)
+com = pycomando.Comando(port)
 ```
 
 ```c
@@ -62,7 +74,7 @@ def show(bytes):
 
 
 # just print out received messages
-com.receive_message = show
+com.register_message_callback(show)
 ```
 
 ```c
@@ -76,7 +88,7 @@ void show() {
   com.send_message(com.get_bytes(), com.get_n_bytes());
 
 // call show when a message is received
-com.on_message(show);
+com.register_message_callback(show);
 ```
 
 For messages to be sent/recieved, the device has to have a chance to "handle"
@@ -84,8 +96,7 @@ the stream.
 
 ```python
 # python
-while port.inWaiting():
-    com.handle_stream()
+com.handle_stream()
 ```
 
 ```c
@@ -101,19 +112,8 @@ structure messages to do things like:
 1. have python trigger commands on the arduino
 2. have the arduino trigger commands in python
 
-To use protocols, create a stream (as above) and a special stream handler
-
-# TODO
-```python
-# python
-```
-
-# TODO
-```c
-// arduino
-```
-
-Now, register some protocols with the handler.
+To use protocols, create a stream and handler (as above). Then register some
+protocols.
 
 ```python
 # python
