@@ -17,30 +17,39 @@ types = {
     chr: (
         lambda v: struct.pack('<c', v),
         lambda bs: (1, struct.unpack('<c', bs[0])[0])),
-    ctypes.c_int16: (
+    ctypes.c_byte: (
+        lambda v: struct.pack('<c', chr(v.value)),
+        lambda bs: (1, struct.unpack('<c', bs[0])[0])),
+    ctypes.c_char: (
+        lambda v: struct.pack('<c', v),
+        lambda bs: (1, struct.unpack('<c', bs[0])[0])),
+    int: (
         lambda v: struct.pack('<h', v),
         lambda bs: (2, struct.unpack('<h', bs[:2])[0])),
+    ctypes.c_int16: (
+        lambda v: struct.pack('<h', v.value),
+        lambda bs: (2, struct.unpack('<h', bs[:2])[0])),
     ctypes.c_uint16: (
-        lambda v: struct.pack('<H', v),
+        lambda v: struct.pack('<H', v.value),
         lambda bs: (2, struct.unpack('<H', bs[:2])[0])),
     ctypes.c_int32: (
-        lambda v: struct.pack('<i', v),
+        lambda v: struct.pack('<i', v.value),
         lambda bs: (4, struct.unpack('<i', bs[:4])[0])),
     ctypes.c_uint32: (
-        lambda v: struct.pack('<I', v),
+        lambda v: struct.pack('<I', v.value),
         lambda bs: (4, struct.unpack('<I', bs[:4])[0])),
     float: (
         lambda v: struct.pack('<f', v),
+        lambda bs: (4, struct.unpack('<f', bs[:4])[0])),
+    ctypes.c_float: (
+        lambda v: struct.pack('<f', v.value),
         lambda bs: (4, struct.unpack('<f', bs[:4])[0])),
     str: (
         str,
         lambda bs: (bs[0], bs[1:1+ord(bs[0])])),
 }
-types[int] = types[ctypes.c_int32]
 types[ctypes.c_bool] = types[bool]
-types[ctypes.c_char] = types[chr]
-types[ctypes.c_byte] = types[chr]
-types[ctypes.c_float] = types[float]
+
 
 
 class CommandProtocol(Protocol):
