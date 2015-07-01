@@ -24,7 +24,7 @@ types = {
         lambda v: struct.pack('<c', v),
         lambda bs: (1, struct.unpack('<c', bs[0])[0])),
     int: (
-        lambda v: struct.pack('<h', v),
+        lambda v: struct.pack('<i', v),
         lambda bs: (2, struct.unpack('<h', bs[:2])[0])),
     ctypes.c_int16: (
         lambda v: struct.pack('<h', v.value),
