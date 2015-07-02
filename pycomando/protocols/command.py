@@ -24,8 +24,9 @@ types = {
         lambda v: struct.pack('<f', v),
         lambda bs: (4, struct.unpack('<f', bs[:4])[0])),
     str: (
-        str,  # TODO I think this is wrong, should it pre-pend the length?
-        lambda bs: (bs[0], bs[1:1+ord(bs[0])])),
+        lambda v: chr(len(v)) + v,
+        #str,  # TODO I think this is wrong, should it pre-pend the length?
+        lambda bs: (ord(bs[0]) + 1, bs[1:1+ord(bs[0])])),
     ctypes.c_byte: (
         lambda v: struct.pack('<b', v.value),
         lambda bs: (1, ctypes.c_byte(struct.unpack('<b', bs[0])[0]))),
@@ -63,10 +64,11 @@ def test_type_conversion():
         (0.0, '\x00\x00\x00\x00'),
         (1.0, '\x00\x00\x80?'),
         (-1.0, '\x00\x00\x80\xbf'),  # float
-        #('\x00', '\x00'),
-        #('\xff', '\xff'),
-        #('abc', 'abc'),  # TODO fix string packing
-        #(';\x00\n\r,', ';\x00\n\r,'),  # string
+        ('\x00', '\x01\x00'),
+        ('\xff', '\x01\xff'),
+        ('', '\x00'),
+        ('abc', '\x03abc'),
+        (';\x00\n\r,', '\x05;\x00\n\r,'),  # string
         (c.c_byte(0), '\x00'),
         (c.c_byte(127), '\x7f'),
         (c.c_byte(-128), '\x80'),  # c_byte
@@ -119,14 +121,14 @@ class CommandProtocol(Protocol):
 
     def get_arg(self, t):
         if not self.has_arg():
-            return Exception("Attempt to get_arg when no arg was available")
+            raise Exception("Attempt to get_arg when no arg was available")
         if t not in types:
             raise Exception("Unknown argument type: %s" % t)
         s = self.received_arg_string[self.received_arg_string_index:]
         if len(s) == 0:
             raise Exception("Received argstring is empty")
         n, v = types[t][1](s)
-        #print("\t\t%s -> %s" % (map(ord, s), v))
+        #print("received %r -> %s[%s]" % (s, v, n))
         self.received_arg_string_index += n
         return v
 
@@ -136,6 +138,7 @@ class CommandProtocol(Protocol):
             raise Exception("Invalid empty command message")
         self.received_arg_string = bs[1:]
         self.received_arg_string_index = 0
+        #print("Received arg string: %r" % self.received_arg_string)
         cid = ord(bs[0])
         if cid in self.callbacks:
             self.callbacks[cid](self)

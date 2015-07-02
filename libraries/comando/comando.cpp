@@ -43,6 +43,9 @@ void Protocol::send_message(byte *bytes, byte n_bytes) {
 void Protocol::receive_message(byte *bytes, byte n_bytes) {
 };
 
+// =============== TextProtocol ============
+TextProtocol::TextProtocol(Comando & bcmdo): Protocol(bcmdo) {};
+
 // =============== EchoProtocol ============
 EchoProtocol::EchoProtocol(Comando & bcmdo): Protocol(bcmdo) {};
 

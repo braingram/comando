@@ -27,6 +27,7 @@ extern "C" {
 #define MAX_MSG_LENGTH 255
 #define MAX_CALLBACKS 50
 #define MAX_PROTOCOLS 10
+#define MAX_STRING_ARG_LENGTH 16
 
 #define LOG_DEBUG 10
 #define LOG_INFO 20
@@ -61,6 +62,8 @@ class Protocol {
 };
 
 class TextProtocol: public Protocol {
+  public:
+    TextProtocol(Comando & bcmdo);
 };
 
 class EchoProtocol: public Protocol {
@@ -88,6 +91,7 @@ class CommandProtocol: public Protocol {
     byte arg_index;
     byte arg_buffer[MAX_MSG_LENGTH];  // for receiving
     byte arg_buffern;
+    char string_arg_buffer[MAX_STRING_ARG_LENGTH];
     command_callback callbacks[MAX_CALLBACKS];
   public:
     CommandProtocol(Comando & bcmdo);
@@ -97,6 +101,14 @@ class CommandProtocol: public Protocol {
     template <typename T> void add_arg(T arg) {
       build_message((byte *) &arg, sizeof(T));
     };
+
+    void add_string_arg(String s) {
+      // prepend length
+      byte n = (byte) s.length();
+      build_message(&n, 1);
+      build_message((byte *) s.c_str(), s.length());
+    };
+
     void finish_command();
     void send_command(byte cid);
     bool has_arg();
@@ -106,6 +118,21 @@ class CommandProtocol: public Protocol {
       memcpy((byte *)&value, arg_buffer+arg_index, sizeof(T));
       arg_index += sizeof(T);
       return value;
+    };
+
+    String get_string_arg() {
+      if (!has_arg()) return NULL;
+      // read size of arg_buffer string [first byte]
+      byte n = *(arg_buffer+arg_index);
+      arg_index += 1;
+      if (n == '\x00') {  // if a 0 length string, just return s
+          return String("");
+      };
+      // copy arg_buffer into string
+      memcpy(string_arg_buffer, arg_buffer+arg_index, n);
+      String s = String(string_arg_buffer);
+      arg_index += n;
+      return s;
     };
 };
 

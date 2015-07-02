@@ -142,6 +142,31 @@ void float_arg(CommandProtocol *cmd){
   cmd->finish_command();
 };
 
+void string_arg(CommandProtocol *cmd){
+  echo.send_message(com.get_bytes(), com.get_n_bytes());
+  cmd->start_command(5);
+  String s;
+  s = cmd->get_string_arg();
+  if (s == "hi") {
+    cmd->add_string_arg(String("hi"));
+  } else {
+    cmd->add_string_arg(s);
+  };
+  s = cmd->get_string_arg();
+  if (s == "hello") {
+    cmd->add_string_arg(String("hello"));
+  } else {
+    cmd->add_string_arg(s);
+  };
+  s = cmd->get_string_arg();
+  if (s == "") {
+    cmd->add_string_arg(String(""));
+  } else {
+    cmd->add_string_arg(s);
+  };
+  cmd->finish_command();
+};
+
 void setup() {
   // start stream
   Serial.begin(9600);
@@ -154,6 +179,7 @@ void setup() {
   cmd.register_callback(2, chr_arg);
   cmd.register_callback(3, int_arg);
   cmd.register_callback(4, float_arg);
+  cmd.register_callback(5, string_arg);
 }
 
 void loop() {

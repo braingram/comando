@@ -11,6 +11,8 @@ except ImportError:
     sys.path.append('../../')
     import pycomando
 
+pycomando.protocols.command.test_type_conversion()
+
 port = serial.Serial('/dev/ttyACM0', 9600)
 time.sleep(1)  # wait for arduino
 port.setDTR(level=0)
@@ -57,12 +59,20 @@ def float_arg(cmd):
         print("\t%s: %s" % (i, cmd.get_arg(float)))
 
 
+def string_arg(cmd):
+    print("[cmd]->string_arg: args...")
+    for i in xrange(3):
+        s = cmd.get_arg(str)
+        print("\t%s: %s[%s]" % (i, s, len(s)))
+
+
 text.receive_message = show
 cmd.register_callback(0, no_arg)
 cmd.register_callback(1, bool_arg)
 cmd.register_callback(2, chr_arg)
 cmd.register_callback(3, int_arg)
 cmd.register_callback(4, float_arg)
+cmd.register_callback(5, string_arg)
 
 print("\t<- from computer, -> = from arduino")
 
@@ -78,6 +88,7 @@ cmds = [
     (2, ('\r', '\n', 'a', 'Z', '\x00')),
     (3, (0, 1, -1, 1000000, -1000000)),
     (4, (0.0, 1.0, -1.0, 1.23, -123.0)),
+    (5, ("hi", "hello", "")),
 ]
 
 print
@@ -90,3 +101,6 @@ for (cid, args) in cmds:
     time.sleep(0.5)
     while port.inWaiting():
         com.handle_stream()
+time.sleep(0.5)
+while port.inWaiting():
+    com.handle_stream()
