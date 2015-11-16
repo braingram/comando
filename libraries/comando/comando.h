@@ -24,7 +24,7 @@ extern "C" {
   typedef void (*command_callback) (CommandProtocol *protocol);
 }
 
-#define MAX_MSG_LENGTH 255
+#define MAX_MSG_LENGTH 64
 #define MAX_CALLBACKS 50
 #define MAX_PROTOCOLS 10
 #define MAX_STRING_ARG_LENGTH 16
@@ -121,7 +121,7 @@ class CommandProtocol: public Protocol {
     };
 
     String get_string_arg() {
-      if (!has_arg()) return NULL;
+      if (!has_arg()) return String("");
       // read size of arg_buffer string [first byte]
       byte n = *(arg_buffer+arg_index);
       arg_index += 1;
