@@ -170,4 +170,95 @@ class CommandProtocol(Protocol):
             [self.add_arg(a) for a in args]
         self.finish_command()
 
-# TODO namespace
+
+class EventManager(object):
+    def __init__(self, command_protocol, commands):
+        """
+        commands = dict of:
+            keys = command_id
+            values = dicts with:
+                'name': unique command name as a string
+                'args': command argument types (used for trigger/send)
+                'result': command result types (used for on/receive)
+                'doc': command doc string
+        """
+        self._commands = commands
+        self._commands_by_name = {}
+        for cid in self._commands:
+            command = self._commands[cid]
+            if 'name' not in command:
+                raise ValueError("Command must have name: %s" % (command, ))
+            n = command['name']
+            if 'name' in self._commands_by_name:
+                raise ValueError("Command name %s is not unique" % (n, ))
+            command['id'] = cid
+            self._commands_by_name[n] = command
+        self._cmd = command_protocol
+        for cid in self._commands:
+            self._cmd.register_callback(
+                cid,
+                lambda cmd, cid=cid: self._receive_event(cmd, cid))
+        self._callbacks = {}
+        self._wait_for = None
+
+    def _receive_event(self, cmd, cid):
+        if cid not in self._commands:
+            raise ValueError("Received unknown command with index=%s" % cid)
+        command = self._commands[cid]
+        # unpack results
+        if 'result' in command:
+            result_spec = command['result']
+            result = []
+            for spec in result_spec:
+                if not cmd.has_arg():
+                    raise ValueError(
+                        "Not enough [%s] arguments to unpack the result [%s]"
+                        % (len(result), len(result_spec)))
+                result.append(cmd.get_arg(spec))
+        else:
+            result = []
+        return self._handle_event(command['name'], result)
+
+    def _handle_event(self, name, result):
+        if name in self._callbacks:
+            [cb(result) for cb in self._callbacks[name]]
+        if name == self._wait_for:
+            self._wait_for = result
+
+    def on(self, name, func):
+        """Register a callback (func) for a given command name"""
+        if name not in self._callbacks:
+            self._callbacks[name] = []
+        self._callbacks[name].append(func)
+
+    def trigger(self, name, *args):
+        """Trigger a command by name with arguments (args)"""
+        # find command by name
+        if name not in self._commands_by_name:
+            raise ValueError("Unknown command name: %s" % (name, ))
+        command = self._commands_by_name[name]
+        cid = command['id']
+        if 'args' not in command:
+            return self._cmd.send_command(cid)
+        arg_spec = command['args']
+        if len(args) != len(arg_spec):
+            raise ValueError(
+                "len(args)[%s] != len(arg spec)[%s] for command %s" %
+                (len(args), len(arg_spec), name))
+        pargs = [s(a) for (s, a) in zip(arg_spec, args)]
+        self._cmd.send_command(cid, pargs)
+
+    def blocking_trigger(self, name, *args):
+        """Trigger a command and wait for a response with the same name"""
+        if self._wait_for is not None:
+            raise ValueError(
+                "Unexpected _wait_for is not None %s" % (self._wait_for, ))
+        self._wait_for = name
+        self.trigger(name, *args)
+        comm = self._cmd.comm()
+        while self._wait_for is name:
+            comm.handle_stream()
+        del comm
+        r = self._wait_for
+        self._wait_for = None
+        return r
