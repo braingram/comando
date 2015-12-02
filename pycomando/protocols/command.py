@@ -107,6 +107,7 @@ def test_type_conversion():
 
 class CommandProtocol(Protocol):
     def __init__(self, comm=None, index=0):
+        Protocol.__init__(self, comm, index)
         self.received_arg_string = ""
         self.received_arg_string_index = 0
         self.send_arg_string = ""
