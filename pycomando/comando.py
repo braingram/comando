@@ -28,6 +28,24 @@ class Comando(object):
         if protocols is not None:
             [self.register_protocol(i, p) for (i, p) in enumerate(protocols)]
 
+    def _resync(self, chars):
+        # first see if there is a valid message inside these chars
+        for (i, c) in enumerate(chars):
+            n = ord(c)
+            e = i + 1 + n
+            if e >= len(chars):
+                continue
+            bs = chars[i+1:e]
+            cs = chars[e]
+            if chr(checksum(bs)) == cs:
+                # this is a valid message, so parse it and keep trying to sync
+                self.receive_message(bs)
+                if e + 1 >= len(chars):  # we're in sync!
+                    return
+                return self._resync(chars[e+1:])
+        # no sync found, read 1 more char
+        return self._resync(chars + self.stream.read(1))
+
     def handle_stream(self, poll=True):
         if poll and hasattr(self.stream, 'inWaiting'):
             while self.stream.inWaiting():
@@ -46,6 +64,9 @@ class Comando(object):
         if cs != chr(checksum(bs)):
             # this may be a result of out-of-sync communication
             # TODO find a way to recover from this
+            # original data was:
+            #  chr(n) + bs + cs
+            return self._resync(chr(n) + bs + cs)
             raise Exception(
                 "Invalid message checksum [%s != %s]" %
                 (chr(checksum(bs)), cs))
