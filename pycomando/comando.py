@@ -44,6 +44,8 @@ class Comando(object):
                 (len(bs), n))
         cs = self.stream.read(1)
         if cs != chr(checksum(bs)):
+            # this may be a result of out-of-sync communication
+            # TODO find a way to recover from this
             raise Exception(
                 "Invalid message checksum [%s != %s]" %
                 (chr(checksum(bs)), cs))

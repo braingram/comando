@@ -46,6 +46,23 @@ void Protocol::receive_message(byte *bytes, byte n_bytes) {
 // =============== TextProtocol ============
 TextProtocol::TextProtocol(Comando & bcmdo): Protocol(bcmdo) {};
 
+void TextProtocol::print(const char * str, byte n) {
+    start_message();
+    build_message((byte *)str, n);
+    finish_message();
+};
+
+void TextProtocol::print(const char * str) {
+    // find null char
+    byte n = 0;
+    while (str[n] != '\x00') n++;
+    print(str, n);
+};
+
+void TextProtocol::print(const String &str) {
+    print(str.c_str(), str.length());
+};
+
 // =============== EchoProtocol ============
 EchoProtocol::EchoProtocol(Comando & bcmdo): Protocol(bcmdo) {};
 

@@ -64,6 +64,9 @@ class Protocol {
 class TextProtocol: public Protocol {
   public:
     TextProtocol(Comando & bcmdo);
+    void print(const char * str, byte n);
+    void print(const char * str);  // look for \x00
+    void print(const String &str);
 };
 
 class EchoProtocol: public Protocol {
