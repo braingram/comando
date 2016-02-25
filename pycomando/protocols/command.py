@@ -222,7 +222,7 @@ class EventManager(object):
 
     def _handle_event(self, name, result):
         if name in self._callbacks:
-            [cb(result) for cb in self._callbacks[name]]
+            [cb(*result) for cb in self._callbacks[name]]
         if name == self._wait_for:
             self._wait_for = result
 
