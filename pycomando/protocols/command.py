@@ -254,12 +254,18 @@ class EventManager(object):
         if self._wait_for is not None:
             raise ValueError(
                 "Unexpected _wait_for is not None %s" % (self._wait_for, ))
-        self._wait_for = name
         self.trigger(name, *args)
+        self._wait_for = name
         comm = self._cmd.comm()
+        error = None
         while self._wait_for is name:
-            comm.handle_stream()
+            try:
+                comm.handle_stream()
+            except Exception as e:
+                error = e
         del comm
         r = self._wait_for
         self._wait_for = None
+        if error is not None:
+            raise e
         return r
