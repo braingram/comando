@@ -258,7 +258,7 @@ class EventManager(object):
         self._wait_for = name
         comm = self._cmd.comm()
         error = None
-        while self._wait_for is name:
+        while (self._wait_for is name) and (error is None):
             try:
                 comm.handle_stream()
             except Exception as e:
