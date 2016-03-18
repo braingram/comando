@@ -5,6 +5,19 @@ Base handler class
 This is responsible for reading/writing messages
 """
 
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+if False:  # set to True for debugging
+    logger.setLevel(logging.DEBUG)
+    f = logging.Formatter(
+        '%(name)s[%(levelno)s]: %(message)s')
+    h = logging.StreamHandler()
+    h.formatter = f
+    logger.addHandler(logging.StreamHandler())
+
 
 def checksum(bs):
     """Compute a checksum for an array of bytes"""
@@ -29,6 +42,7 @@ class Comando(object):
             [self.register_protocol(i, p) for (i, p) in enumerate(protocols)]
 
     def _resync(self, chars):
+        logger.warning("resyncing")
         # first see if there is a valid message inside these chars
         for (i, c) in enumerate(chars):
             n = ord(c)
@@ -52,7 +66,8 @@ class Comando(object):
                 self.handle_stream(poll=False)
             return
         n = ord(self.stream.read(1))
-        if n != '\x00':
+        #if n != '\x00':
+        if n != 0:
             bs = self.stream.read(n)
         else:
             bs = ""
@@ -62,17 +77,20 @@ class Comando(object):
                 (len(bs), n))
         cs = self.stream.read(1)
         if cs != chr(checksum(bs)):
+            logger.warning(
+                "checksum did not match: %s, %s", cs, chr(checksum(bs)))
             # this may be a result of out-of-sync communication
-            # TODO find a way to recover from this
+            # recover from this
             # original data was:
             #  chr(n) + bs + cs
             return self._resync(chr(n) + bs + cs)
-            raise Exception(
-                "Invalid message checksum [%s != %s]" %
-                (chr(checksum(bs)), cs))
+            #raise Exception(
+            #    "Invalid message checksum [%s != %s]" %
+            #    (chr(checksum(bs)), cs))
         self.receive_message(bs)
 
     def register_protocol(self, index, protocol):
+        logger.info("register_protocol[%s] at index: %s", protocol, index)
         self.protocols[index] = protocol
         protocol.assign_comm(self)
         protocol.index = index
@@ -91,9 +109,11 @@ class Comando(object):
             self.protocols[self.error_protocol].send_message(bs)
 
     def send_message(self, bs):
+        logger.debug("send_message: %s", bs)
         self.stream.write(build_message(bs))
 
     def receive_message(self, bs):
+        logger.debug("receive_message: %s", bs)
         if self.message_callback is not None:
             return self.message_callback(bs)
         if (len(bs) < 1):
