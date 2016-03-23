@@ -7,7 +7,7 @@
 # - send commands from python to the arduino
 # - receive commands from the arduino in python
 #
-# see libraries/comando/commands in the comando repository for the
+# see libraries/comando/examples/commands in the comando repository for the
 # corresponding arduino code
 
 # ctypes is useful for defining fixed size data types
