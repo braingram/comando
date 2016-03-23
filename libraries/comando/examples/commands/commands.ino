@@ -2,6 +2,9 @@
  * Comando command protocol example
  * 2016/03/23 : Brett Graham
  * 
+ * This is a simple example that shows how to control the arduino led
+ * from python
+ *
  * This example shows how to:
  * - send text messages from the arduino to python
  * - receive commands from python to the arduino
