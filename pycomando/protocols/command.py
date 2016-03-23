@@ -19,13 +19,12 @@ types = {
         lambda bs: (1, struct.unpack('<c', bs[0])[0])),
     int: (
         lambda v: struct.pack('<i', v),
-        lambda bs: (2, struct.unpack('<h', bs[:2])[0])),
+        lambda bs: (4, struct.unpack('<i', bs[:4])[0])),
     float: (
         lambda v: struct.pack('<f', v),
         lambda bs: (4, struct.unpack('<f', bs[:4])[0])),
     str: (
         lambda v: chr(len(v)) + v,
-        #str,  # TODO I think this is wrong, should it pre-pend the length?
         lambda bs: (ord(bs[0]) + 1, bs[1:1+ord(bs[0])])),
     ctypes.c_byte: (
         lambda v: struct.pack('<b', v.value),
