@@ -1,0 +1,47 @@
+# Class names and data types
+Comando	KEYWORD1
+Protocol	KEYWORD1
+CommandProtocol	KEYWORD1
+TextProtocol	KEYWORD1
+EchoProtocol	KEYWORD1
+LogProtocol	KEYWORD1
+
+# Public functions
+register_protocol	KEYWORD2
+set_error_protocol	KEYWORD2
+reset	KEYWORD2
+register_message_callback	KEYWORD2
+unregister_message_callback	KEYWORD2
+send_message	KEYWORD2
+send_error	KEYWORD2
+copy_bytes	KEYWORD2
+get_bytes	KEYWORD2
+get_n_bytes	KEYWORD2
+get_checksum	KEYWORD2
+handle_stream	KEYWORD2
+receive_message	KEYWORD2
+register_callback	KEYWORD2
+start_command	KEYWORD2
+add_arg	KEYWORD2
+add_string_arg	KEYWORD2
+finish_command	KEYWORD2
+send_command	KEYWORD2
+has_arg	KEYWORD2
+get_arg	KEYWORD2
+get_string_arg	KEYWORD2
+log	KEYWORD2
+debug	KEYWORD2
+info	KEYWORD2
+warn	KEYWORD2
+warning	KEYWORD2
+error	KEYWORD2
+critical	KEYWORD2
+fatal	KEYWORD2
+print	KEYWORD2
+start_message	KEYWORD2
+build_message	KEYWORD2
+finish_message	KEYWORD2
+send_message	KEYWORD2
+receive_message	KEYWORD2
+set_index	KEYWORD2
+get_index	KEYWORD2
