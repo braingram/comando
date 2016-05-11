@@ -10,10 +10,10 @@
 # - send commands with single arguemnt from python to the arduino
 # - receive commands from the arduino in python
 #
-# see libraries/comando/examples/commands_led_on_off in the comando repository
+# see libraries/comando/examples/led_on_off in the comando repository
 # for the corresponding arduino code
 #
-# after this example, check out commands_led_blink.py for how to handle give
+# after this example, check out led_blink.py for how to handle give
 # commands with multiple arguments
 
 
