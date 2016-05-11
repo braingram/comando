@@ -6,10 +6,10 @@
 # blinking pattern by sending and receiving commands with multiple arguments
 #
 #
-# see libraries/comando/examples/commands_led_blink in the
+# see libraries/comando/examples/led_blink in the
 # comando repository for the corresponding arduino code
 #
-# for more detailed explanation, go to examples/commands_led_on_off.py
+# for more detailed explanation, go to examples/led_on_off.py
 # in to comando repository
 
 import sys
