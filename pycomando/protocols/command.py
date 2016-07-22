@@ -174,6 +174,9 @@ class CommandProtocol(Protocol):
 class EventManager(object):
     def __init__(self, command_protocol, commands):
         """
+        An event-driven interface to a command protocol stream.
+
+        command_protocol = CommandProtocol instance
         commands = dict of:
             keys = command_id
             values = dicts with:
@@ -181,6 +184,10 @@ class EventManager(object):
                 'args': command argument types (used for trigger/send)
                 'result': command result types (used for on/receive)
                 'doc': command doc string
+
+        This class allows name-based access to commands and proves
+        both asynchronous (trigger, on) and synchronous (blocking_trigger)
+        methods to communicate on the command protocol stream.
         """
         self._commands = commands
         self._commands_by_name = {}
