@@ -211,9 +211,10 @@ class EventManager(object):
             result = []
             for spec in result_spec:
                 if not cmd.has_arg():
-                    raise ValueError(
-                        "Not enough [%s] arguments to unpack the result [%s]"
-                        % (len(result), len(result_spec)))
+                    continue
+                    # raise ValueError(
+                    #     "Not enough [%s] arguments to unpack the result [%s]"
+                    #     % (len(result), len(result_spec)))
                 result.append(cmd.get_arg(spec))
         else:
             result = []
@@ -238,14 +239,16 @@ class EventManager(object):
             raise ValueError("Unknown command name: %s" % (name, ))
         command = self._commands_by_name[name]
         cid = command['id']
-        if 'args' not in command:
+        if 'args' not in command or len(args) == 0:
             return self._cmd.send_command(cid)
         arg_spec = command['args']
-        if len(args) != len(arg_spec):
+        # accept < args then arg_spec
+        if len(args) > len(arg_spec):
             raise ValueError(
-                "len(args)[%s] != len(arg spec)[%s] for command %s" %
+                "len(args)[%s] > len(arg spec)[%s] for command %s" %
                 (len(args), len(arg_spec), name))
-        pargs = [s(a) for (s, a) in zip(arg_spec, args)]
+        na = len(args)
+        pargs = [s(a) for (s, a) in zip(arg_spec[:na], args[:na])]
         self._cmd.send_command(cid, pargs)
 
     def blocking_trigger(self, name, *args):
