@@ -43,16 +43,7 @@ text.receive_message = print_message
 
 # define a callback that will be called when the arduino sends
 # a specific command to python
-def led_set(cmd):
-    # first, check if the command contained any arguments
-    if not cmd.has_arg():
-        # if not, throw an error
-        raise Exception("Invalid led_set response, missing arg")
-    # read the argument, you must tell comando the data type so
-    # it knows how many bytes to unpack, this is where it is
-    # helpful to use ctypes data types rather than the usual
-    # python types as they are of a fixed size
-    v = cmd.get_arg(ctypes.c_byte)
+def led_set(v):
     print("Led was set to value: %s" % v)
 
 
