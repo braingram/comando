@@ -32,7 +32,7 @@ it to a variable, arg. The following python code does the same operation.
 ```
 
 It is helpful to use ctypes variables in python to gain tighter control
-over the number of bits used to represent arguments. See (command.py)[https://github.com/braingram/comando/blob/master/pycomando/protocols/command.py]
+over the number of bits used to represent arguments. See [command.py](https://github.com/braingram/comando/blob/master/pycomando/protocols/command.py)
 for how the built-in struct module packs and unpacks various data types.
 
 has_arg
