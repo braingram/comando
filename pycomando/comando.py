@@ -5,12 +5,14 @@ Base handler class
 This is responsible for reading/writing messages
 """
 
+from . import errors
+
 import logging
 
 
 logger = logging.getLogger(__name__)
 
-if False:  # set to True for debugging
+if True:  # set to True for debugging
     logger.setLevel(logging.DEBUG)
     f = logging.Formatter(
         '%(name)s[%(levelno)s]: %(message)s')
@@ -28,7 +30,8 @@ def build_message(bs):
     """Build a message around an array of bytes"""
     n = len(bs)
     if n > 255:
-        raise Exception("Messages cannot contain > 255 bytes [%s]" % n)
+        raise errors.MessageError(
+            "Messages cannot contain > 255 bytes [%s]" % n)
     return chr(n) + bs + chr(checksum(bs))
 
 
@@ -53,7 +56,11 @@ class Comando(object):
             cs = chars[e]
             if chr(checksum(bs)) == cs:
                 # this is a valid message, so parse it and keep trying to sync
-                self.receive_message(bs)
+                try:
+                    self.receive_message(bs)
+                except errors.ComandoError as err:
+                    logging.warning("resyncing on message error: %s" % err)
+                    return self._resync(chars[e+1:])
                 if e + 1 >= len(chars):  # we're in sync!
                     return
                 return self._resync(chars[e+1:])
@@ -72,7 +79,7 @@ class Comando(object):
         else:
             bs = ""
         if len(bs) != n:
-            raise Exception(
+            raise errors.MessageError(
                 "Invalid message length of bytes %s != %s" %
                 (len(bs), n))
         cs = self.stream.read(1)
@@ -117,8 +124,8 @@ class Comando(object):
         if self.message_callback is not None:
             return self.message_callback(bs)
         if (len(bs) < 1):
-            raise Exception("Invalid message, missing protocol")
+            raise errors.MessageError("Invalid message, missing protocol")
         pid = ord(bs[0])
         if pid not in self.protocols:
-            raise Exception("Unknown protocol: %s" % pid)
+            raise errors.MessageError("Unknown protocol: %s" % pid)
         self.protocols[pid].receive_message(bs[1:])
