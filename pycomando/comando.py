@@ -12,7 +12,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-if True:  # set to True for debugging
+if False:  # set to True for debugging
     logger.setLevel(logging.DEBUG)
     f = logging.Formatter(
         '%(name)s[%(levelno)s]: %(message)s')
