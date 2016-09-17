@@ -6,6 +6,7 @@ import ctypes
 import struct
 
 from .base import Protocol
+from .. import errors
 
 
 # type: (pack[function], unpack)
@@ -110,6 +111,10 @@ def test_type_conversion():
         assert e, "[%s, unpack error] %r != %r" % (type(v), uv, v)
 
 
+class CommandError(errors.ProtocolError):
+    pass
+
+
 class CommandProtocol(Protocol):
     def __init__(self, comm=None, index=0):
         Protocol.__init__(self, comm, index)
@@ -127,12 +132,13 @@ class CommandProtocol(Protocol):
 
     def get_arg(self, t):
         if not self.has_arg():
-            raise Exception("Attempt to get_arg when no arg was available")
+            raise CommandError(
+                "Attempt to get_arg when no arg was available")
         if t not in types:
-            raise Exception("Unknown argument type: %s" % t)
+            raise CommandError("Unknown argument type: %s" % t)
         s = self.received_arg_string[self.received_arg_string_index:]
         if len(s) == 0:
-            raise Exception("Received argstring is empty")
+            raise CommandError("Received argstring is empty")
         n, v = types[t][1](s)
         #print("received %r -> %s[%s]" % (s, v, n))
         self.received_arg_string_index += n
@@ -141,7 +147,7 @@ class CommandProtocol(Protocol):
     def receive_message(self, bs):
         # byte 0 = command, ....
         if len(bs) < 1:
-            raise Exception("Invalid empty command message")
+            raise CommandError("Invalid empty command message")
         self.received_arg_string = bs[1:]
         self.received_arg_string_index = 0
         #print("Received arg string: %r" % self.received_arg_string)
@@ -149,12 +155,12 @@ class CommandProtocol(Protocol):
         if cid in self.callbacks:
             self.callbacks[cid](self)
         else:
-            raise Exception(
+            raise CommandError(
                 "Received message for unknown command[%s]" % (cid))
 
     def start_command(self, cid):
         if len(self.send_arg_string) != 0:
-            raise Exception(
+            raise CommandError(
                 "Cannot start new command [%s], command already started [%s]" %
                 (cid, self.send_arg_string))
         self.send_arg_string += chr(cid)
@@ -163,7 +169,7 @@ class CommandProtocol(Protocol):
         if t is None:
             t = type(v)
         if t not in types:
-            raise Exception("Unknown argument type: %s" % t)
+            raise CommandError("Unknown argument type: %s" % t)
         self.send_arg_string += types[t][0](v)
 
     def finish_command(self):
@@ -180,6 +186,9 @@ class CommandProtocol(Protocol):
 class EventManager(object):
     def __init__(self, command_protocol, commands):
         """
+        An event-driven interface to a command protocol stream.
+
+        command_protocol = CommandProtocol instance
         commands = dict of:
             keys = command_id
             values = dicts with:
@@ -187,6 +196,10 @@ class EventManager(object):
                 'args': command argument types (used for trigger/send)
                 'result': command result types (used for on/receive)
                 'doc': command doc string
+
+        This class allows name-based access to commands and proves
+        both asynchronous (trigger, on) and synchronous (blocking_trigger)
+        methods to communicate on the command protocol stream.
         """
         self._commands = commands
         self._commands_by_name = {}
@@ -217,9 +230,10 @@ class EventManager(object):
             result = []
             for spec in result_spec:
                 if not cmd.has_arg():
-                    raise ValueError(
-                        "Not enough [%s] arguments to unpack the result [%s]"
-                        % (len(result), len(result_spec)))
+                    continue
+                    # raise ValueError(
+                    #     "Not enough [%s] arguments to unpack the result [%s]"
+                    #     % (len(result), len(result_spec)))
                 result.append(cmd.get_arg(spec))
         else:
             result = []
@@ -244,14 +258,16 @@ class EventManager(object):
             raise ValueError("Unknown command name: %s" % (name, ))
         command = self._commands_by_name[name]
         cid = command['id']
-        if 'args' not in command:
+        if 'args' not in command or len(args) == 0:
             return self._cmd.send_command(cid)
         arg_spec = command['args']
-        if len(args) != len(arg_spec):
+        # accept < args then arg_spec
+        if len(args) > len(arg_spec):
             raise ValueError(
-                "len(args)[%s] != len(arg spec)[%s] for command %s" %
+                "len(args)[%s] > len(arg spec)[%s] for command %s" %
                 (len(args), len(arg_spec), name))
-        pargs = [s(a) for (s, a) in zip(arg_spec, args)]
+        na = len(args)
+        pargs = [s(a) for (s, a) in zip(arg_spec[:na], args[:na])]
         self._cmd.send_command(cid, pargs)
 
     def blocking_trigger(self, name, *args):

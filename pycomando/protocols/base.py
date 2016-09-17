@@ -2,6 +2,8 @@
 
 import weakref
 
+from .. import errors
+
 
 class Protocol(object):
     """The most basic protocol that doesn't do anything"""
@@ -16,11 +18,11 @@ class Protocol(object):
 
     def send_message(self, bs):
         if self.comm is None:
-            raise Exception(
+            raise errors.ProtocolError(
                 "Protocol[%s] cannot send, no comm defined" % (self))
         comm = self.comm()
         if comm is None:
-            raise Exception(
+            raise errors.ProtocolError(
                 "Protocol[%s] cannot send, comm has expired" % (self))
         comm.send_message(chr(self.index) + bs)
 
