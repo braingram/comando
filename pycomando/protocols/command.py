@@ -29,6 +29,9 @@ types = {
     ctypes.c_byte: (
         lambda v: struct.pack('<b', v.value),
         lambda bs: (1, ctypes.c_byte(struct.unpack('<b', bs[0])[0]))),
+    ctypes.c_ubyte: (
+        lambda v: struct.pack('<b', v.value),
+        lambda bs: (1, ctypes.c_ubyte(struct.unpack('<b', bs[0])[0]))),
     ctypes.c_char: (
         lambda v: struct.pack('<c', v.value),
         lambda bs: (1, ctypes.c_char(struct.unpack('<c', bs[0])[0]))),
@@ -71,6 +74,9 @@ def test_type_conversion():
         (c.c_byte(0), '\x00'),
         (c.c_byte(127), '\x7f'),
         (c.c_byte(-128), '\x80'),  # c_byte
+        (c.c_ubyte(0), '\x00'),
+        (c.c_ubyte(127), '\x7f'),
+        (c.c_ubyte(128), '\x80'),  # c_ubyte
         (c.c_char('\x00'), '\x00'),
         (c.c_char('\xff'), '\xff'),  # c_char
         (c.c_int16(0), '\x00\x00'),
