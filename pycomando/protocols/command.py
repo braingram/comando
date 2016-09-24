@@ -3,6 +3,7 @@
 """
 
 import ctypes
+import re
 import struct
 
 from .base import Protocol
@@ -121,7 +122,6 @@ class CommandProtocol(Protocol):
         self.received_arg_string = ""
         self.received_arg_string_index = 0
         self.send_arg_string = ""
-        self.commands = {}
         self.callbacks = {}
 
     def register_callback(self, cid, func):
@@ -218,6 +218,8 @@ def attribute_function(mgr, cmd, return_ctypes=False):
         ds += "no arguments"
     if 'result' in cmd:
         ds += "\nresults: %s" % (cmd['result'], )
+    if 'doc' in cmd:
+        ds += "\n%s" % (cmd['doc'], )
     afunc.__doc__ = ds
     return afunc
 
@@ -232,6 +234,83 @@ class Namespace(object):
             setattr(
                 self, cmd['name'], attribute_function(
                     self._mgr, cmd, return_ctypes=return_ctypes))
+
+
+def resolve_ctypes_type(t):
+    if isinstance(t, (str, unicode)):
+        t = t.strip()
+        if hasattr(ctypes, t):
+            return getattr(ctypes, t)
+        if hasattr(ctypes, 'c_' + t):
+            return getattr(ctypes, 'c_' + t)
+        raise CommandError("Invalid type (not in ctypes): %s" % t)
+    return t
+
+cid_regex = r"(?P<id>\d*:)(?P<cmd>.*)"
+command_regex = r"(?P<name>[\w\s]*)(?P<args>[\\(\w,\s\\)]*)?(?P<result>=[\w,\s]*)?(?P<doc>\?.*)?"
+
+
+def resolve_command_types(commands):
+    """
+    Resolve a command definition
+
+    Command definitions can be dictionaries or strings. This function will:
+    - convert command strings to dictionaries
+    - resolve ctypes datatypes from strings ("byte" becomes ctypes.c_byte)
+
+    Command strings should take the form:
+        id:name(arg0,arg1)=result?doc
+
+    id and name are required, the rest are optional
+
+    See EventManager for a description of the resulting command structure.
+    """
+    # id:name(arg0,arg1)=result?doc
+    if isinstance(commands, (str, unicode)):
+        cd = {}
+        for cs in commands.splitlines():
+            s = cs.strip()
+            if len(s) and s[0] != '#':
+                m = re.match(cid_regex, s)
+                if m is None:
+                    raise CommandError("Invalid command def: %s" % s)
+                cid = int(m.group('id')[:-1])
+                cd[cid] = m.group('cmd')
+        commands = cd
+    for cid in commands:
+        command = commands[cid]
+        if isinstance(command, (str, unicode)):
+            print(command)
+            m = re.match(command_regex, command.strip())
+            if m is None:
+                raise CommandError(
+                    "Invalid command def[%s]: %s" % (cid, command))
+            command = {'name': m.group('name').strip()}
+            gd = m.groupdict()
+            if gd['args'] is not None and len(gd['args']):
+                command['args'] = m.group('args')[1:-1]
+            if gd['doc'] is not None and len(gd['doc']):
+                command['doc'] = m.group('doc')[1:]
+            if gd['result'] is not None and len(gd['result']):
+                command['result'] = m.group('result')[1:]
+            print(command)
+        if 'args' in command:
+            if isinstance(command['args'], (str, unicode)):
+                command['args'] = command['args'].split(',')
+            if not isinstance(command['args'], (tuple, list)):
+                command['args'] = (command['args'], )
+            # resolve args
+            command['args'] = [resolve_ctypes_type(t) for t in command['args']]
+        if 'result' in command:
+            if isinstance(command['result'], (str, unicode)):
+                command['result'] = command['result'].split(',')
+            if not isinstance(command['result'], (tuple, list)):
+                command['result'] = (command['result'], )
+            # resolve result
+            command['result'] = [
+                resolve_ctypes_type(t) for t in command['result']]
+        commands[cid] = command
+    return commands
 
 
 class EventManager(object):
@@ -252,7 +331,7 @@ class EventManager(object):
         both asynchronous (trigger, on) and synchronous (blocking_trigger)
         methods to communicate on the command protocol stream.
         """
-        self._commands = commands
+        self._commands = resolve_command_types(commands)
         self._commands_by_name = {}
         for cid in self._commands:
             command = self._commands[cid]
