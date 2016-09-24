@@ -31,8 +31,8 @@ types = {
         lambda v: struct.pack('<b', v.value),
         lambda bs: (1, ctypes.c_byte(struct.unpack('<b', bs[0])[0]))),
     ctypes.c_ubyte: (
-        lambda v: struct.pack('<b', v.value),
-        lambda bs: (1, ctypes.c_ubyte(struct.unpack('<b', bs[0])[0]))),
+        lambda v: struct.pack('<B', v.value),
+        lambda bs: (1, ctypes.c_ubyte(struct.unpack('<B', bs[0])[0]))),
     ctypes.c_char: (
         lambda v: struct.pack('<c', v.value),
         lambda bs: (1, ctypes.c_char(struct.unpack('<c', bs[0])[0]))),
@@ -183,6 +183,57 @@ class CommandProtocol(Protocol):
         self.finish_command()
 
 
+def from_ctypes(*values):
+    return [getattr(v, 'value', v) for v in values]
+
+
+def attribute_function(mgr, cmd, return_ctypes=False):
+    # build attribute by name
+    if hasattr(cmd, 'result'):
+        nr = len(cmd['result'])
+        if nr == 1:
+            if return_ctypes:
+                def afunc(*args):
+                    return mgr.blocking_trigger(cmd['name'])[0]
+            else:
+                def afunc(*args):
+                    return from_ctypes(
+                        *mgr.blocking_trigger(cmd['name']))[0]
+        else:
+            if return_ctypes:
+                def afunc(*args):
+                    return mgr.blocking_trigger(cmd['name'])
+            else:
+                def afunc(*args):
+                    return from_ctypes(
+                        *mgr.blocking_trigger(cmd['name']))
+    else:
+        def afunc(*args):
+            return mgr.trigger(cmd['name'], *args)
+    # build doc string
+    ds = ""
+    if 'args' in cmd:
+        ds += "args: %s" % (cmd['args'], )
+    else:
+        ds += "no arguments"
+    if 'result' in cmd:
+        ds += "\nresults: %s" % (cmd['result'], )
+    afunc.__doc__ = ds
+    return afunc
+
+
+class Namespace(object):
+    def __init__(self, manager, return_ctypes=False):
+        self._mgr = manager
+        # build namespace
+        cmds = self._mgr._commands
+        for ci in cmds:
+            cmd = cmds[ci]
+            setattr(
+                self, cmd['name'], attribute_function(
+                    self._mgr, cmd, return_ctypes=return_ctypes))
+
+
 class EventManager(object):
     def __init__(self, command_protocol, commands):
         """
@@ -282,7 +333,7 @@ class EventManager(object):
         while (self._wait_for is name) and (error is None):
             try:
                 comm.handle_stream()
-            except Exception as e:
+            except (Exception, KeyboardInterrupt) as e:
                 error = e
         del comm
         r = self._wait_for
@@ -290,3 +341,6 @@ class EventManager(object):
         if error is not None:
             raise e
         return r
+
+    def build_namespace(self, return_ctypes=False):
+        return Namespace(self, return_ctypes=return_ctypes)
