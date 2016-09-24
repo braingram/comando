@@ -45,7 +45,8 @@ class Comando(object):
             [self.register_protocol(i, p) for (i, p) in enumerate(protocols)]
 
     def _resync(self, chars):
-        logger.warning("resyncing")
+        logging.warning("resyncing")
+        #logger.warning("resyncing")
         # first see if there is a valid message inside these chars
         for (i, c) in enumerate(chars):
             n = ord(c)
