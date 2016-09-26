@@ -189,7 +189,7 @@ def from_ctypes(*values):
 
 def attribute_function(mgr, cmd, return_ctypes=False):
     # build attribute by name
-    if hasattr(cmd, 'result'):
+    if 'result' in cmd:
         nr = len(cmd['result'])
         if nr == 1:
             if return_ctypes:
@@ -280,7 +280,7 @@ def resolve_command_types(commands):
     for cid in commands:
         command = commands[cid]
         if isinstance(command, (str, unicode)):
-            print(command)
+            #print(command)
             m = re.match(command_regex, command.strip())
             if m is None:
                 raise CommandError(
@@ -293,7 +293,7 @@ def resolve_command_types(commands):
                 command['doc'] = m.group('doc')[1:]
             if gd['result'] is not None and len(gd['result']):
                 command['result'] = m.group('result')[1:]
-            print(command)
+            #print(command)
         if 'args' in command:
             if isinstance(command['args'], (str, unicode)):
                 command['args'] = command['args'].split(',')
