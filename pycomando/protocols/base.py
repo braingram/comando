@@ -24,7 +24,7 @@ class Protocol(object):
         if comm is None:
             raise errors.ProtocolError(
                 "Protocol[%s] cannot send, comm has expired" % (self))
-        comm.send_message(chr(self.index) + bs)
+        comm.send_message(self.index.to_bytes(1,'little') + bs)
 
     def receive_message(self, bs):
         raise NotImplementedError(

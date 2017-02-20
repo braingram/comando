@@ -73,7 +73,7 @@ try:
     while True:
         try:
             # read the user input
-            i = int(raw_input(
+            i = int(input(
                 "Please input a value for the led (Ctrl-C to exit)"))
             # send the input to the arduino (asynchronously)
             mgr.trigger('led_set', i)
