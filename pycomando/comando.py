@@ -23,7 +23,7 @@ if False:  # set to True for debugging
 
 def checksum(bs):
     """Compute a checksum for an array of bytes"""
-    return sum([ord(b) for b in bs]) % 256
+    return sum(bs) % 256
 
 
 def build_message(bs):
@@ -32,7 +32,7 @@ def build_message(bs):
     if n > 255:
         raise errors.MessageError(
             "Messages cannot contain > 255 bytes [%s]" % n)
-    return chr(n) + bs + chr(checksum(bs))
+    return n.to_bytes(1,"little") + bs + checksum(bs).to_bytes(1,"little")
 
 
 class Comando(object):
@@ -49,7 +49,7 @@ class Comando(object):
         #logger.warning("resyncing")
         # first see if there is a valid message inside these chars
         for (i, c) in enumerate(chars):
-            n = ord(c)
+            n = c
             e = i + 1 + n
             if e >= len(chars):
                 continue
@@ -73,25 +73,25 @@ class Comando(object):
             while self.stream.inWaiting():
                 self.handle_stream(poll=False)
             return
-        n = ord(self.stream.read(1))
+        n = int.from_bytes(self.stream.read(1),"little")
         #if n != '\x00':
         if n != 0:
             bs = self.stream.read(n)
         else:
-            bs = ""
+            bs = b""
         if len(bs) != n:
             raise errors.MessageError(
                 "Invalid message length of bytes %s != %s" %
                 (len(bs), n))
-        cs = self.stream.read(1)
-        if cs != chr(checksum(bs)):
+        cs = int.from_bytes(self.stream.read(1),"little")
+        if cs != checksum(bs):
             logger.warning(
                 "checksum did not match: %s, %s", cs, chr(checksum(bs)))
             # this may be a result of out-of-sync communication
             # recover from this
             # original data was:
             #  chr(n) + bs + cs
-            return self._resync(chr(n) + bs + cs)
+            return self._resync(n.to_bytes(1,"little") + bs + cs)
             #raise Exception(
             #    "Invalid message checksum [%s != %s]" %
             #    (chr(checksum(bs)), cs))
@@ -117,16 +117,16 @@ class Comando(object):
             self.protocols[self.error_protocol].send_message(bs)
 
     def send_message(self, bs):
-        logger.debug("send_message: %s", bs)
+        logger.debug("send_message: %r)", bs)
         self.stream.write(build_message(bs))
 
     def receive_message(self, bs):
-        logger.debug("receive_message: %s", bs)
+        logger.debug("receive_message: %r", bs)
         if self.message_callback is not None:
             return self.message_callback(bs)
         if (len(bs) < 1):
             raise errors.MessageError("Invalid message, missing protocol")
-        pid = ord(bs[0])
+        pid = bs[0]
         if pid not in self.protocols:
             raise errors.MessageError("Unknown protocol: %s" % pid)
         self.protocols[pid].receive_message(bs[1:])

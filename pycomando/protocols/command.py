@@ -15,43 +15,46 @@ from .. import errors
 types = {
     bool: (
         lambda v: struct.pack('<?', v),
-        lambda bs: (1, struct.unpack('<?', bs[0])[0])),
+        lambda bs: (1, struct.unpack('<?', bs)[0])),
     chr: (
         lambda v: struct.pack('<c', v),
-        lambda bs: (1, struct.unpack('<c', bs[0])[0])),
+        lambda bs: (1, struct.unpack('<c', bs)[0])),
     int: (
         lambda v: struct.pack('<i', v),
-        lambda bs: (4, struct.unpack('<i', bs[:4])[0])),
+        lambda bs: (4, struct.unpack('<i', bs)[0])),
     float: (
         lambda v: struct.pack('<f', v),
-        lambda bs: (4, struct.unpack('<f', bs[:4])[0])),
+        lambda bs: (4, struct.unpack('<f', bs)[0])),
     str: (
-        lambda v: chr(len(v)) + v,
-        lambda bs: (ord(bs[0]) + 1, bs[1:1+ord(bs[0])])),
+        lambda v: len(v).to_bytes(1,"little",) + v.encode('latin1'),
+        lambda bs: (bs[0] + 1, (bs[1:1+bs[0]]).decode('latin1'))),
+    bytes: (
+        lambda v: len(v).to_bytes(1,"little",) + v,
+        lambda bs: (bs[0] + 1, bs[1:1+bs[0]])),
     ctypes.c_byte: (
         lambda v: struct.pack('<b', v.value),
-        lambda bs: (1, ctypes.c_byte(struct.unpack('<b', bs[0])[0]))),
+        lambda bs: (1, ctypes.c_byte(struct.unpack('<b', bs)[0]))),
     ctypes.c_ubyte: (
         lambda v: struct.pack('<B', v.value),
-        lambda bs: (1, ctypes.c_ubyte(struct.unpack('<B', bs[0])[0]))),
+        lambda bs: (1, ctypes.c_ubyte(struct.unpack('<B', bs)[0]))),
     ctypes.c_char: (
         lambda v: struct.pack('<c', v.value),
-        lambda bs: (1, ctypes.c_char(struct.unpack('<c', bs[0])[0]))),
+        lambda bs: (1, ctypes.c_char(struct.unpack('<c', bs)[0]))),
     ctypes.c_int16: (
         lambda v: struct.pack('<h', v.value),
-        lambda bs: (2, ctypes.c_int16(struct.unpack('<h', bs[:2])[0]))),
+        lambda bs: (2, ctypes.c_int16(struct.unpack('<h', bs)[0]))),
     ctypes.c_uint16: (
         lambda v: struct.pack('<H', v.value),
-        lambda bs: (2, ctypes.c_uint16(struct.unpack('<H', bs[:2])[0]))),
+        lambda bs: (2, ctypes.c_uint16(struct.unpack('<H', bs)[0]))),
     ctypes.c_int32: (
         lambda v: struct.pack('<i', v.value),
-        lambda bs: (4, ctypes.c_int32(struct.unpack('<i', bs[:4])[0]))),
+        lambda bs: (4, ctypes.c_int32(struct.unpack('<i', bs)[0]))),
     ctypes.c_uint32: (
         lambda v: struct.pack('<I', v.value),
-        lambda bs: (4, ctypes.c_uint32(struct.unpack('<I', bs[:4])[0]))),
+        lambda bs: (4, ctypes.c_uint32(struct.unpack('<I', bs)[0]))),
     ctypes.c_float: (
         lambda v: struct.pack('<f', v.value),
-        lambda bs: (4, ctypes.c_float(struct.unpack('<f', bs[:4])[0]))),
+        lambda bs: (4, ctypes.c_float(struct.unpack('<f', bs)[0]))),
 }
 types[ctypes.c_bool] = types[bool]
 
@@ -59,51 +62,56 @@ types[ctypes.c_bool] = types[bool]
 def test_type_conversion():
     c = ctypes
     tests = [
-        (False, '\x00'),
-        (True, '\x01'),  # bool
-        (0, '\x00\x00\x00\x00'),
-        (1, '\x01\x00\x00\x00'),
-        (256, '\x00\x01\x00\x00'),
-        (-1, '\xff\xff\xff\xff'),  # int
-        (0.0, '\x00\x00\x00\x00'),
-        (1.0, '\x00\x00\x80?'),
-        (-1.0, '\x00\x00\x80\xbf'),  # float
-        ('\x00', '\x01\x00'),
-        ('\xff', '\x01\xff'),
-        ('', '\x00'),
-        ('abc', '\x03abc'),
-        (';\x00\n\r,', '\x05;\x00\n\r,'),  # string
-        (c.c_byte(0), '\x00'),
-        (c.c_byte(127), '\x7f'),
-        (c.c_byte(-128), '\x80'),  # c_byte
-        (c.c_ubyte(0), '\x00'),
-        (c.c_ubyte(127), '\x7f'),
-        (c.c_ubyte(128), '\x80'),  # c_ubyte
-        (c.c_char('\x00'), '\x00'),
-        (c.c_char('\xff'), '\xff'),  # c_char
-        (c.c_int16(0), '\x00\x00'),
-        (c.c_int16(1), '\x01\x00'),
-        (c.c_int16(-1), '\xff\xff'),
-        (c.c_int16(256), '\x00\x01'),  # c_int16
-        (c.c_uint16(0), '\x00\x00'),
-        (c.c_uint16(1), '\x01\x00'),
-        (c.c_uint16(256), '\x00\x01'),
-        (c.c_uint16(65535), '\xff\xff'),  # c_uint16
-        (c.c_int32(0), '\x00\x00\x00\x00'),
-        (c.c_int32(1), '\x01\x00\x00\x00'),
-        (c.c_int32(-1), '\xff\xff\xff\xff'),
-        (c.c_int32(256), '\x00\x01\x00\x00'),  # c_int32
-        (c.c_uint32(0), '\x00\x00\x00\x00'),
-        (c.c_uint32(1), '\x01\x00\x00\x00'),
-        (c.c_uint32(256), '\x00\x01\x00\x00'),
-        (c.c_uint32(4294967295), '\xff\xff\xff\xff'),  # c_uint32
-        (c.c_float(0.0), '\x00\x00\x00\x00'),
-        (c.c_float(1.0), '\x00\x00\x80?'),
-        (c.c_float(-1.0), '\x00\x00\x80\xbf'),  # c_float
+        (1, False, b'\x00'),
+        (2, True, b'\x01'),  # bool
+        (3, 0, b'\x00\x00\x00\x00'),
+        (4, 1, b'\x01\x00\x00\x00'),
+        (5, 256, b'\x00\x01\x00\x00'),
+        (6, -1, b'\xff\xff\xff\xff'),  # int
+        (7, 0.0, b'\x00\x00\x00\x00'),
+        (8, 1.0, b'\x00\x00\x80?'),
+        (9, -1.0, b'\x00\x00\x80\xbf'),  # float
+        (10, b'\x00', b'\x01\x00'),
+        (11, b'\xff', b'\x01\xff'),
+        (12, b'', b'\x00'),
+        (13, b'abc', b'\x03abc'),
+        (14, b';\x00\n\r,', b'\x05;\x00\n\r,'),  # bytes
+        (15, c.c_byte(0), b'\x00'),
+        (16, c.c_byte(127), b'\x7f'),
+        (17, c.c_byte(-128), b'\x80'),  # c_byte
+        (18, c.c_ubyte(0), b'\x00'),
+        (19, c.c_ubyte(127), b'\x7f'),
+        (20, c.c_ubyte(128), b'\x80'),  # c_ubyte
+        (21, c.c_char(b'\x00'), b'\x00'),
+        (22, c.c_char(b'\xff'), b'\xff'),  # c_char
+        (23, c.c_int16(0), b'\x00\x00'),
+        (24, c.c_int16(1), b'\x01\x00'),
+        (25, c.c_int16(-1), b'\xff\xff'),
+        (26, c.c_int16(256), b'\x00\x01'),  # c_int16
+        (27, c.c_uint16(0), b'\x00\x00'),
+        (28, c.c_uint16(1), b'\x01\x00'),
+        (29, c.c_uint16(256), b'\x00\x01'),
+        (30, c.c_uint16(65535), b'\xff\xff'),  # c_uint16
+        (31, c.c_int32(0), b'\x00\x00\x00\x00'),
+        (32, c.c_int32(1), b'\x01\x00\x00\x00'),
+        (33, c.c_int32(-1), b'\xff\xff\xff\xff'),
+        (34, c.c_int32(256), b'\x00\x01\x00\x00'),  # c_int32
+        (35, c.c_uint32(0), b'\x00\x00\x00\x00'),
+        (36, c.c_uint32(1), b'\x01\x00\x00\x00'),
+        (37, c.c_uint32(256), b'\x00\x01\x00\x00'),
+        (38, c.c_uint32(4294967295), b'\xff\xff\xff\xff'),  # c_uint32
+        (39, c.c_float(0.0), b'\x00\x00\x00\x00'),
+        (40, c.c_float(1.0), b'\x00\x00\x80?'),
+        (41, c.c_float(-1.0), b'\x00\x00\x80\xbf'),  # c_float
+        (42, '\x00', b'\x01\x00'),
+        (43, '\xff', b'\x01\xff'),
+        (44, 'abc', b'\x03abc'),
+        (45, ';\x00\n\r,', b'\x05;\x00\n\r,'),  # strings
     ]
-    for v, r in tests:
+    for id, v, r in tests:
+        print("id : %i" % id)
         pv = types[type(v)][0](v)
-        assert pv == r, "[%s pack error] %r != %r" % (type(v), pv, r)
+        assert pv == r, "%i [%s pack error] %r != %r" % (id, type(v), pv, r)
         uv = types[type(v)][1](r)[1]
         if hasattr(v, 'value'):
             e = uv.value == v.value
@@ -119,9 +127,9 @@ class CommandError(errors.ProtocolError):
 class CommandProtocol(Protocol):
     def __init__(self, comm=None, index=0):
         Protocol.__init__(self, comm, index)
-        self.received_arg_string = ""
+        self.received_arg_string = bytearray()
         self.received_arg_string_index = 0
-        self.send_arg_string = ""
+        self.send_arg_string = bytearray()
         self.callbacks = {}
 
     def register_callback(self, cid, func):
@@ -151,7 +159,7 @@ class CommandProtocol(Protocol):
         self.received_arg_string = bs[1:]
         self.received_arg_string_index = 0
         #print("Received arg string: %r" % self.received_arg_string)
-        cid = ord(bs[0])
+        cid = bs[0]
         if cid in self.callbacks:
             self.callbacks[cid](self)
         else:
@@ -163,7 +171,8 @@ class CommandProtocol(Protocol):
             raise CommandError(
                 "Cannot start new command [%s], command already started [%s]" %
                 (cid, self.send_arg_string))
-        self.send_arg_string += chr(cid)
+        print(type(self.send_arg_string))
+        self.send_arg_string += cid.to_bytes(1,'little')
 
     def add_arg(self, v, t=None):
         if t is None:
@@ -174,7 +183,7 @@ class CommandProtocol(Protocol):
 
     def finish_command(self):
         self.send_message(self.send_arg_string)
-        self.send_arg_string = ""
+        self.send_arg_string = bytearray()
 
     def send_command(self, cid, args=None):
         self.start_command(cid)
@@ -237,7 +246,7 @@ class Namespace(object):
 
 
 def resolve_ctypes_type(t):
-    if isinstance(t, (str, unicode)):
+    if isinstance(t, str):
         t = t.strip()
         if hasattr(ctypes, t):
             return getattr(ctypes, t)
@@ -266,7 +275,7 @@ def resolve_command_types(commands):
     See EventManager for a description of the resulting command structure.
     """
     # id:name(arg0,arg1)=result?doc
-    if isinstance(commands, (str, unicode)):
+    if isinstance(commands, str):
         cd = {}
         for cs in commands.splitlines():
             s = cs.strip()
@@ -279,8 +288,8 @@ def resolve_command_types(commands):
         commands = cd
     for cid in commands:
         command = commands[cid]
-        if isinstance(command, (str, unicode)):
-            #print(command)
+        if isinstance(command, str):
+            print(command)
             m = re.match(command_regex, command.strip())
             if m is None:
                 raise CommandError(
@@ -295,14 +304,14 @@ def resolve_command_types(commands):
                 command['result'] = m.group('result')[1:]
             #print(command)
         if 'args' in command:
-            if isinstance(command['args'], (str, unicode)):
+            if isinstance(command['args'], str):
                 command['args'] = command['args'].split(',')
             if not isinstance(command['args'], (tuple, list)):
                 command['args'] = (command['args'], )
             # resolve args
             command['args'] = [resolve_ctypes_type(t) for t in command['args']]
         if 'result' in command:
-            if isinstance(command['result'], (str, unicode)):
+            if isinstance(command['result'], str):
                 command['result'] = command['result'].split(',')
             if not isinstance(command['result'], (tuple, list)):
                 command['result'] = (command['result'], )

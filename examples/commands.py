@@ -20,6 +20,9 @@ import sys
 import pycomando
 import serial
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 if len(sys.argv) < 2:
     raise Exception("A serial port must be supplied: commands.py <port>")
 port = sys.argv[1]
@@ -76,8 +79,7 @@ try:
     while True:
         try:
             # read the user input
-            i = int(raw_input(
-                "Please input a value for the led (Ctrl-C to exit)"))
+            i = int(input("Please input a value for the led (Ctrl-C to exit)"))
             # send the input to the arduino, notice the command id
             # and that the second argument is a tuple (or could be any iterator
             cmd.send_command(0, (ctypes.c_byte(i), ))
