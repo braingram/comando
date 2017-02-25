@@ -4,14 +4,14 @@ import sys
 import weakref
 
 from .. import errors
-from ..comando import to_bytes
+from ..comando import to_bytes, stob, btos
 
-if sys.version_info >= (3, 0):
-    stob = lambda s: s.encode('latin1') if isinstance(s, str) else s
-    btos = lambda b: b.decode('latin1') if isinstance(b, bytes) else b
-else:
-    stob = str
-    btos = str
+#if sys.version_info >= (3, 0):
+#    stob = lambda s: s.encode('latin1') if isinstance(s, str) else s
+#    btos = lambda b: b.decode('latin1') if isinstance(b, bytes) else b
+#else:
+#    stob = str
+#    btos = str
 
 
 class Protocol(object):

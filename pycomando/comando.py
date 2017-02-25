@@ -13,8 +13,12 @@ from . import errors
 
 if sys.version_info >= (3, 0):
     to_bytes = lambda i: i.to_bytes(1, 'little')
+    stob = lambda s: s.encode('latin1') if isinstance(s, str) else s
+    btos = lambda b: b.decode('latin1') if isinstance(b, bytes) else b
 else:
     to_bytes = chr
+    stob = str
+    btos = str
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +48,7 @@ def build_message(bs):
     if n > 255:
         raise errors.MessageError(
             "Messages cannot contain > 255 bytes [%s]" % n)
-    return bytes(to_bytes(n) + bs + to_bytes(checksum(bs)))
+    return bytes(to_bytes(n) + stob(bs) + to_bytes(checksum(bs)))
 
 
 class Comando(object):

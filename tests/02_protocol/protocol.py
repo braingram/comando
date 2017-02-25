@@ -19,9 +19,9 @@ except ImportError:
 # connect to the serial port
 port = serial.Serial('/dev/ttyACM0', 9600)
 # if this is an arduino, reset it and wait
-time.sleep(1)  # wait for arduino
-port.setDTR(level=0)
-time.sleep(1)
+#time.sleep(1)  # wait for arduino
+#port.setDTR(level=0)
+#time.sleep(1)
 
 # create our stream handler
 com = pycomando.Comando(port)
@@ -32,7 +32,7 @@ text = pycomando.protocols.TextProtocol(com)
 # define a default message callback
 # this will get called whenever a message is received
 def show(bs):
-    print("Arduino said: " + bs)
+    print("Arduino said: %s" % bs)
 
 
 # tell the text protocol what to do when a message is received

@@ -13,7 +13,7 @@ com.register_protocol(0, text)
 
 
 def show(text):
-    print text
+    print(text)
 
 text.register_callback(show)
 

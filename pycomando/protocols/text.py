@@ -12,7 +12,7 @@ class TextProtocol(Protocol):
         self.callbacks.append(func)
 
     def receive_message(self, bs):
-        if '\x00' in bs:
+        if b'\x00' in bs:
             s = bs.split('\x00')[0]
         else:
             s = bs
