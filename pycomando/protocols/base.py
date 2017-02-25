@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import sys
+#import sys
 import weakref
 
 from .. import errors
-from ..comando import to_bytes, stob, btos
+from ..comando import to_bytes, stob
 
 #if sys.version_info >= (3, 0):
 #    stob = lambda s: s.encode('latin1') if isinstance(s, str) else s

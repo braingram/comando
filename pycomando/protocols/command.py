@@ -7,9 +7,9 @@ import re
 import struct
 import sys
 
-from .base import Protocol, stob, btos
+from .base import Protocol
 from .. import errors
-from ..comando import to_bytes
+from ..comando import to_bytes, stob, btos
 
 if sys.version_info >= (3, 0):
     unicode = str
@@ -153,7 +153,7 @@ class CommandProtocol(Protocol):
 
     def receive_message(self, bs):
         # byte 0 = command, ....
-        print("command.receive_message: %r" % bs)
+        #print("command.receive_message: %r" % bs)
         if len(bs) < 1:
             raise CommandError("Invalid empty command message")
         self.received_arg_string = bs[1:]
@@ -205,19 +205,19 @@ def attribute_function(mgr, cmd, return_ctypes=False):
         if nr == 1:
             if return_ctypes:
                 def afunc(*args):
-                    return mgr.blocking_trigger(cmd['name'])[0]
+                    return mgr.blocking_trigger(cmd['name'], *args)[0]
             else:
                 def afunc(*args):
                     return from_ctypes(
-                        *mgr.blocking_trigger(cmd['name']))[0]
+                        *mgr.blocking_trigger(cmd['name'], *args))[0]
         else:
             if return_ctypes:
                 def afunc(*args):
-                    return mgr.blocking_trigger(cmd['name'])
+                    return mgr.blocking_trigger(cmd['name'], *args)
             else:
                 def afunc(*args):
                     return from_ctypes(
-                        *mgr.blocking_trigger(cmd['name']))
+                        *mgr.blocking_trigger(cmd['name'], *args))
     else:
         def afunc(*args):
             return mgr.trigger(cmd['name'], *args)
