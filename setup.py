@@ -177,6 +177,9 @@ def find_package_data(packages):
             if '.'.join((package, subdir)) in packages:  # skip submodules
                 logging.debug("skipping submodule %s/%s" % (package, subdir))
                 continue
+            if subdir == '__pycache__':
+                logging.debug("skipping %s/__pycache__" % package)
+                continue
             if skip_tests and (subdir == 'tests'):  # skip tests
                 logging.debug("skipping tests %s/%s" % (package, subdir))
                 continue
