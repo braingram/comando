@@ -133,6 +133,7 @@ class CommandProtocol: public Protocol {
       };
       // copy arg_buffer into string
       memcpy(string_arg_buffer, arg_buffer+arg_index, n);
+      string_arg_buffer[n] = '\x00';
       String s = String(string_arg_buffer);
       arg_index += n;
       return s;

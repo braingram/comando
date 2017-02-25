@@ -18,7 +18,8 @@ else:
 
 logger = logging.getLogger(__name__)
 
-if False:  # set to True for debugging
+
+if True:  # set to True for debugging
     logger.setLevel(logging.DEBUG)
     f = logging.Formatter(
         '%(name)s[%(levelno)s]: %(message)s')
@@ -128,11 +129,11 @@ class Comando(object):
             self.protocols[self.error_protocol].send_message(bs)
 
     def send_message(self, bs):
-        logger.debug("send_message: %s", bs)
+        logger.debug("send_message: %r", bs)
         self.stream.write(build_message(bs))
 
     def receive_message(self, bs):
-        logger.debug("receive_message: %s", bs)
+        logger.debug("receive_message: %r", bs)
         if self.message_callback is not None:
             return self.message_callback(bs)
         if (len(bs) < 1):

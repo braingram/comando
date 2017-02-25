@@ -12,6 +12,9 @@ except ImportError:
     sys.path.append('../../')
     import pycomando
 
+if sys.version_info >= (3, 0):
+    xrange = range
+
 pycomando.protocols.command.test_type_conversion()
 
 port = serial.Serial('/dev/ttyACM0', 9600)
@@ -30,7 +33,7 @@ cmds = [
     (0, None, ()),
     # (1, ctypes.c_bool, (True, False)),
     (1, bool, (True, False)),
-    (2, ctypes.c_char, ('\r', '\n', 'a', 'Z', '\x00')),
+    (2, ctypes.c_char, (b'\r', b'\n', b'a', b'Z', b'\x00')),
     # (3, ctypes.c_int32, (0, 1, -1, 1000000, -1000000)),
     (3, int, (0, 1, -1, 1000000, -1000000)),
     # (4, ctypes.c_float, (0.0, 1.0, -1.0, 1.23, -123.0)),
@@ -96,7 +99,7 @@ def string_arg(cmd):
         assert cmd.has_arg()
         s = cmd.get_arg(cmds[5][1])
         print("\t%s: %s[%s]" % (i, s, len(s)))
-        assert s == cmds[5][2][i], "%s, %s" % (a, cmds[5][2][i])
+        assert s == cmds[5][2][i], "%s, %s" % (s, cmds[5][2][i])
 
 
 text.receive_message = show
@@ -115,13 +118,13 @@ for msg in ('hi', 'how are you'):
     com.handle_stream()
 
 
-print
+print()
 for (cid, t, args) in cmds:
     if len(args) == 0:
         args = None
     else:
         args = [t(a) for a in args]
-    print
+    print()
     print("[cmd]<- %s [%s]" % (cid, args))
     cmd.send_command(cid, args)
     time.sleep(0.5)

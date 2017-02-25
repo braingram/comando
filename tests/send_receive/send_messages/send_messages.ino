@@ -2,6 +2,7 @@
  * 
  */
 #include<comando.h>
+#define LED 13
 
 // Initialize the comando communication stream handler
 Comando com = Comando(Serial);
@@ -21,11 +22,13 @@ void bool_arg(CommandProtocol* cmd){
     cmd->add_arg(true);
   } else {
     cmd->add_arg(false);
+    digitalWrite(LED, HIGH);
   };
   if(cmd->get_arg<boolean>() == false) {
     cmd->add_arg(false);
   } else {
     cmd->add_arg(true);
+    digitalWrite(LED, HIGH);
   };
   cmd->finish_command();
 };
@@ -47,26 +50,31 @@ void chr_arg(CommandProtocol* cmd){
     cmd->add_arg('\r');
   } else {
     cmd->add_arg('e');
+    digitalWrite(LED, HIGH);
   };
   if(cmd->get_arg<char>() == '\n') {
     cmd->add_arg('\n');
   } else {
     cmd->add_arg('e');
+    digitalWrite(LED, HIGH);
   };
   if(cmd->get_arg<char>() == 'a') {
     cmd->add_arg('a');
   } else {
     cmd->add_arg('e');
+    digitalWrite(LED, HIGH);
   };
   if(cmd->get_arg<char>() == 'Z') {
     cmd->add_arg('Z');
   } else {
     cmd->add_arg('e');
+    digitalWrite(LED, HIGH);
   };
   if(cmd->get_arg<char>() == '\0') {
     cmd->add_arg('\0');
   } else {
     cmd->add_arg('e');
+    digitalWrite(LED, HIGH);
   };
   cmd->finish_command();
 };
@@ -79,26 +87,31 @@ void int_arg(CommandProtocol *cmd){
     cmd->add_arg(0L);
   } else {
     cmd->add_arg(2L);
+    digitalWrite(LED, HIGH);
   };
   if (cmd->get_arg<long>() == 1) {
     cmd->add_arg(1L);
   } else {
     cmd->add_arg(2L);
+    digitalWrite(LED, HIGH);
   };
   if (cmd->get_arg<long>() == -1) {
     cmd->add_arg(-1L);
   } else {
     cmd->add_arg(2L);
+    digitalWrite(LED, HIGH);
   };
   if (cmd->get_arg<long>() == 1000000) {
     cmd->add_arg(1000000L);
   } else {
     cmd->add_arg(2L);
+    digitalWrite(LED, HIGH);
   };
   if (cmd->get_arg<long>() == -1000000) {
     cmd->add_arg(-1000000L);
   } else {
     cmd->add_arg(2L);
+    digitalWrite(LED, HIGH);
   };
   cmd->finish_command();
 };
@@ -113,24 +126,28 @@ void float_arg(CommandProtocol *cmd){
     cmd->add_arg(0.0f);
   } else {
     cmd->add_arg(2.0f);
+    digitalWrite(LED, HIGH);
   };
   f = cmd->get_arg<float>();
   if (abs(f - 1.0) < 0.0001) {
     cmd->add_arg(1.0f);
   } else {
     cmd->add_arg(2.0f);
+    digitalWrite(LED, HIGH);
   };
   f = cmd->get_arg<float>();
   if (abs(f + 1.0) < 0.0001) {
     cmd->add_arg(-1.0f);
   } else {
     cmd->add_arg(2.0f);
+    digitalWrite(LED, HIGH);
   };
   f = cmd->get_arg<float>();
   if (abs(f - 1.23) < 0.01) {
     cmd->add_arg(1.23f);
   } else {
     cmd->add_arg(2.0f);
+    digitalWrite(LED, HIGH);
   };
   
   f = cmd->get_arg<float>();
@@ -138,6 +155,7 @@ void float_arg(CommandProtocol *cmd){
     cmd->add_arg(-123.0f);
   } else {
     cmd->add_arg(2.0f);
+    digitalWrite(LED, HIGH);
   };
   cmd->finish_command();
 };
@@ -145,29 +163,37 @@ void float_arg(CommandProtocol *cmd){
 void string_arg(CommandProtocol *cmd){
   echo.send_message(com.get_bytes(), com.get_n_bytes());
   cmd->start_command(5);
-  String s;
+  String s = "";
   s = cmd->get_string_arg();
+  echo.send_message((byte *) s.c_str(), s.length());
   if (s == "hi") {
     cmd->add_string_arg(String("hi"));
   } else {
     cmd->add_string_arg(s);
+    digitalWrite(LED, HIGH);
   };
   s = cmd->get_string_arg();
+  echo.send_message((byte *) s.c_str(), s.length());
   if (s == "hello") {
     cmd->add_string_arg(String("hello"));
   } else {
     cmd->add_string_arg(s);
+    digitalWrite(LED, HIGH);
   };
   s = cmd->get_string_arg();
+  echo.send_message((byte *) s.c_str(), s.length());
   if (s == "") {
     cmd->add_string_arg(String(""));
   } else {
     cmd->add_string_arg(s);
+    digitalWrite(LED, HIGH);
   };
   cmd->finish_command();
 };
 
 void setup() {
+  pinMode(LED, OUTPUT);
+  digitalWrite(LED, LOW);
   // start stream
   Serial.begin(9600);
   // register protocols

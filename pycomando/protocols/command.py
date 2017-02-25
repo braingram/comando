@@ -7,17 +7,12 @@ import re
 import struct
 import sys
 
-from .base import Protocol
+from .base import Protocol, stob, btos
 from .. import errors
 from ..comando import to_bytes
 
 if sys.version_info >= (3, 0):
     unicode = str
-    stob = lambda s: s.encode('latin1')
-    btos = lambda b: b.decode('latin1')
-else:
-    stob = str
-    btos = str
 
 # type: (pack[function], unpack)
 # pack/unpack: (bytes_consumed, function)
@@ -158,6 +153,7 @@ class CommandProtocol(Protocol):
 
     def receive_message(self, bs):
         # byte 0 = command, ....
+        print("command.receive_message: %r" % bs)
         if len(bs) < 1:
             raise CommandError("Invalid empty command message")
         self.received_arg_string = bs[1:]
