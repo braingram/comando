@@ -3,6 +3,7 @@
 import weakref
 
 from .. import errors
+from ..comando import to_bytes
 
 
 class Protocol(object):
@@ -24,7 +25,7 @@ class Protocol(object):
         if comm is None:
             raise errors.ProtocolError(
                 "Protocol[%s] cannot send, comm has expired" % (self))
-        comm.send_message(chr(self.index) + bs)
+        comm.send_message(to_bytes(self.index) + bs)
 
     def receive_message(self, bs):
         raise NotImplementedError(

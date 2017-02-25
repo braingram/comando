@@ -20,6 +20,9 @@ import sys
 import pycomando
 import serial
 
+if sys.version_info >= (3, 0):
+    raw_input = input
+
 if len(sys.argv) < 2:
     raise Exception("A serial port must be supplied: commands.py <port>")
 port = sys.argv[1]

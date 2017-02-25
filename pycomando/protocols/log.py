@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from .base import Protocol
+from ..comando import to_bytes
 
 import logging
 
@@ -23,7 +24,7 @@ class LogProtocol(Protocol):
         self.logger.log(bs[0], bs[1:])
 
     def log(self, level, message):
-        self.send_message(chr(level) + message)
+        self.send_message(to_bytes(level) + message)
 
     def debug(self, message):
         self.log(logging.DEBUG, message)

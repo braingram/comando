@@ -5,20 +5,29 @@
 import ctypes
 import re
 import struct
+import sys
 
 from .base import Protocol
 from .. import errors
+from ..comando import to_bytes
 
+if sys.version_info >= (3, 0):
+    unicode = str
+    stob = lambda s: s.encode('latin1')
+    btos = lambda b: b.decode('latin1')
+else:
+    stob = str
+    btos = str
 
 # type: (pack[function], unpack)
 # pack/unpack: (bytes_consumed, function)
 types = {
     bool: (
         lambda v: struct.pack('<?', v),
-        lambda bs: (1, struct.unpack('<?', bs[0])[0])),
+        lambda bs: (1, struct.unpack('<?', bs[:1])[0])),
     chr: (
         lambda v: struct.pack('<c', v),
-        lambda bs: (1, struct.unpack('<c', bs[0])[0])),
+        lambda bs: (1, struct.unpack('<c', bs[:1])[0])),
     int: (
         lambda v: struct.pack('<i', v),
         lambda bs: (4, struct.unpack('<i', bs[:4])[0])),
@@ -26,17 +35,20 @@ types = {
         lambda v: struct.pack('<f', v),
         lambda bs: (4, struct.unpack('<f', bs[:4])[0])),
     str: (
-        lambda v: chr(len(v)) + v,
-        lambda bs: (ord(bs[0]) + 1, bs[1:1+ord(bs[0])])),
+        lambda v: to_bytes(len(v)) + stob(v),
+        lambda bs: (ord(bs[:1]) + 1, btos(bs[1:1+ord(bs[:1])]))),
+    bytes: (
+        lambda v: to_bytes(len(v)) + v,
+        lambda bs: (ord(bs[:1]) + 1, bs[1:1+ord(bs[:1])])),
     ctypes.c_byte: (
         lambda v: struct.pack('<b', v.value),
-        lambda bs: (1, ctypes.c_byte(struct.unpack('<b', bs[0])[0]))),
+        lambda bs: (1, ctypes.c_byte(struct.unpack('<b', bs[:1])[0]))),
     ctypes.c_ubyte: (
         lambda v: struct.pack('<B', v.value),
-        lambda bs: (1, ctypes.c_ubyte(struct.unpack('<B', bs[0])[0]))),
+        lambda bs: (1, ctypes.c_ubyte(struct.unpack('<B', bs[:1])[0]))),
     ctypes.c_char: (
         lambda v: struct.pack('<c', v.value),
-        lambda bs: (1, ctypes.c_char(struct.unpack('<c', bs[0])[0]))),
+        lambda bs: (1, ctypes.c_char(struct.unpack('<c', bs[:1])[0]))),
     ctypes.c_int16: (
         lambda v: struct.pack('<h', v.value),
         lambda bs: (2, ctypes.c_int16(struct.unpack('<h', bs[:2])[0]))),
@@ -59,47 +71,47 @@ types[ctypes.c_bool] = types[bool]
 def test_type_conversion():
     c = ctypes
     tests = [
-        (False, '\x00'),
-        (True, '\x01'),  # bool
-        (0, '\x00\x00\x00\x00'),
-        (1, '\x01\x00\x00\x00'),
-        (256, '\x00\x01\x00\x00'),
-        (-1, '\xff\xff\xff\xff'),  # int
-        (0.0, '\x00\x00\x00\x00'),
-        (1.0, '\x00\x00\x80?'),
-        (-1.0, '\x00\x00\x80\xbf'),  # float
-        ('\x00', '\x01\x00'),
-        ('\xff', '\x01\xff'),
-        ('', '\x00'),
-        ('abc', '\x03abc'),
-        (';\x00\n\r,', '\x05;\x00\n\r,'),  # string
-        (c.c_byte(0), '\x00'),
-        (c.c_byte(127), '\x7f'),
-        (c.c_byte(-128), '\x80'),  # c_byte
-        (c.c_ubyte(0), '\x00'),
-        (c.c_ubyte(127), '\x7f'),
-        (c.c_ubyte(128), '\x80'),  # c_ubyte
-        (c.c_char('\x00'), '\x00'),
-        (c.c_char('\xff'), '\xff'),  # c_char
-        (c.c_int16(0), '\x00\x00'),
-        (c.c_int16(1), '\x01\x00'),
-        (c.c_int16(-1), '\xff\xff'),
-        (c.c_int16(256), '\x00\x01'),  # c_int16
-        (c.c_uint16(0), '\x00\x00'),
-        (c.c_uint16(1), '\x01\x00'),
-        (c.c_uint16(256), '\x00\x01'),
-        (c.c_uint16(65535), '\xff\xff'),  # c_uint16
-        (c.c_int32(0), '\x00\x00\x00\x00'),
-        (c.c_int32(1), '\x01\x00\x00\x00'),
-        (c.c_int32(-1), '\xff\xff\xff\xff'),
-        (c.c_int32(256), '\x00\x01\x00\x00'),  # c_int32
-        (c.c_uint32(0), '\x00\x00\x00\x00'),
-        (c.c_uint32(1), '\x01\x00\x00\x00'),
-        (c.c_uint32(256), '\x00\x01\x00\x00'),
-        (c.c_uint32(4294967295), '\xff\xff\xff\xff'),  # c_uint32
-        (c.c_float(0.0), '\x00\x00\x00\x00'),
-        (c.c_float(1.0), '\x00\x00\x80?'),
-        (c.c_float(-1.0), '\x00\x00\x80\xbf'),  # c_float
+        (False, b'\x00'),
+        (True, b'\x01'),  # bool
+        (0, b'\x00\x00\x00\x00'),
+        (1, b'\x01\x00\x00\x00'),
+        (256, b'\x00\x01\x00\x00'),
+        (-1, b'\xff\xff\xff\xff'),  # int
+        (0.0, b'\x00\x00\x00\x00'),
+        (1.0, b'\x00\x00\x80?'),
+        (-1.0, b'\x00\x00\x80\xbf'),  # float
+        (b'\x00', b'\x01\x00'),
+        (b'\xff', b'\x01\xff'),
+        ('', b'\x00'),
+        ('abc', b'\x03abc'),
+        (';\x00\n\r,', b'\x05;\x00\n\r,'),  # string
+        (c.c_byte(0), b'\x00'),
+        (c.c_byte(127), b'\x7f'),
+        (c.c_byte(-128), b'\x80'),  # c_byte
+        (c.c_ubyte(0), b'\x00'),
+        (c.c_ubyte(127), b'\x7f'),
+        (c.c_ubyte(128), b'\x80'),  # c_ubyte
+        (c.c_char(b'\x00'), b'\x00'),
+        (c.c_char(b'\xff'), b'\xff'),  # c_char
+        (c.c_int16(0), b'\x00\x00'),
+        (c.c_int16(1), b'\x01\x00'),
+        (c.c_int16(-1), b'\xff\xff'),
+        (c.c_int16(256), b'\x00\x01'),  # c_int16
+        (c.c_uint16(0), b'\x00\x00'),
+        (c.c_uint16(1), b'\x01\x00'),
+        (c.c_uint16(256), b'\x00\x01'),
+        (c.c_uint16(65535), b'\xff\xff'),  # c_uint16
+        (c.c_int32(0), b'\x00\x00\x00\x00'),
+        (c.c_int32(1), b'\x01\x00\x00\x00'),
+        (c.c_int32(-1), b'\xff\xff\xff\xff'),
+        (c.c_int32(256), b'\x00\x01\x00\x00'),  # c_int32
+        (c.c_uint32(0), b'\x00\x00\x00\x00'),
+        (c.c_uint32(1), b'\x01\x00\x00\x00'),
+        (c.c_uint32(256), b'\x00\x01\x00\x00'),
+        (c.c_uint32(4294967295), b'\xff\xff\xff\xff'),  # c_uint32
+        (c.c_float(0.0), b'\x00\x00\x00\x00'),
+        (c.c_float(1.0), b'\x00\x00\x80?'),
+        (c.c_float(-1.0), b'\x00\x00\x80\xbf'),  # c_float
     ]
     for v, r in tests:
         pv = types[type(v)][0](v)
@@ -121,7 +133,7 @@ class CommandProtocol(Protocol):
         Protocol.__init__(self, comm, index)
         self.received_arg_string = ""
         self.received_arg_string_index = 0
-        self.send_arg_string = ""
+        self.send_arg_string = bytes()
         self.callbacks = {}
 
     def register_callback(self, cid, func):
@@ -151,7 +163,10 @@ class CommandProtocol(Protocol):
         self.received_arg_string = bs[1:]
         self.received_arg_string_index = 0
         #print("Received arg string: %r" % self.received_arg_string)
-        cid = ord(bs[0])
+        if isinstance(bs[0], int):
+            cid = bs[0]
+        else:
+            cid = ord(bs[0])
         if cid in self.callbacks:
             self.callbacks[cid](self)
         else:
@@ -163,18 +178,18 @@ class CommandProtocol(Protocol):
             raise CommandError(
                 "Cannot start new command [%s], command already started [%s]" %
                 (cid, self.send_arg_string))
-        self.send_arg_string += chr(cid)
+        self.send_arg_string += to_bytes(cid)
 
     def add_arg(self, v, t=None):
         if t is None:
             t = type(v)
         if t not in types:
             raise CommandError("Unknown argument type: %s" % t)
-        self.send_arg_string += types[t][0](v)
+        self.send_arg_string += bytes(types[t][0](v))
 
     def finish_command(self):
         self.send_message(self.send_arg_string)
-        self.send_arg_string = ""
+        self.send_arg_string = bytes()
 
     def send_command(self, cid, args=None):
         self.start_command(cid)
