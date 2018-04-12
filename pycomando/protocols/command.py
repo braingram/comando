@@ -392,6 +392,13 @@ class EventManager(object):
             self._callbacks[name] = []
         self._callbacks[name].append(func)
 
+    def remove_on(self, name, func):
+        """Un-register a callback (func) for a given command name"""
+        if name not in self._callbacks:
+            return
+        if func in self._callbacks[name]:
+            self._callbacks[name].remove(func)
+
     def trigger(self, name, *args):
         """Trigger a command by name with arguments (args)"""
         # find command by name
