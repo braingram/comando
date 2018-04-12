@@ -38,6 +38,8 @@ def build_message(bs):
 class Comando(object):
     def __init__(self, stream, protocols=None):
         self.stream = stream
+        if hasattr(self.stream, 'flushInput'):
+            self.stream.flushInput()
         self.protocols = {}
         self.message_callback = None
         self.error_protocol = -1
