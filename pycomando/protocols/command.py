@@ -338,7 +338,7 @@ class EventManager(object):
             if 'name' not in command:
                 raise ValueError("Command must have name: %s" % (command, ))
             n = command['name']
-            if 'name' in self._commands_by_name:
+            if n in self._commands_by_name:
                 raise ValueError("Command name %s is not unique" % (n, ))
             command['id'] = cid
             self._commands_by_name[n] = command
