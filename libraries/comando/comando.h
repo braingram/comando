@@ -171,6 +171,7 @@ class Comando {
 
     void send_error(char *buffer, byte n);
     void send_error(char *buffer);
+    void send_error(String str);
 
     byte copy_bytes(byte *buffer, byte n);
     byte copy_bytes(byte *buffer);

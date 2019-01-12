@@ -119,11 +119,13 @@ class Comando(object):
             self.protocols[self.error_protocol].send_message(bs)
 
     def send_message(self, bs):
-        logger.debug("send_message: %s", bs)
-        self.stream.write(build_message(bs))
+        msg = build_message(bs)
+        logger.debug("send_message: %r", msg)
+        self.stream.write(msg)
+        #self.stream.write(build_message(bs))
 
     def receive_message(self, bs):
-        logger.debug("receive_message: %s", bs)
+        logger.debug("receive_message: %r", bs)
         if self.message_callback is not None:
             return self.message_callback(bs)
         if (len(bs) < 1):
