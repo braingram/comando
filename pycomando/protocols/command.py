@@ -5,6 +5,7 @@
 import ctypes
 import re
 import struct
+import sys
 
 from .base import Protocol
 from .. import errors
@@ -425,7 +426,7 @@ class EventManager(object):
         r = self._wait_for
         self._wait_for = None
         if error is not None:
-            raise e
+            raise type(e), e, sys.exc_info()[2] 
         return r
 
     def build_namespace(self, return_ctypes=False):
