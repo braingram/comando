@@ -349,7 +349,7 @@ class EventManager(object):
             if 'name' not in command:
                 raise ValueError("Command must have name: %s" % (command, ))
             n = command['name']
-            if 'name' in self._commands_by_name:
+            if n in self._commands_by_name:
                 raise ValueError("Command name %s is not unique" % (n, ))
             command['id'] = cid
             self._commands_by_name[n] = command
@@ -436,6 +436,7 @@ class EventManager(object):
         r = self._wait_for
         self._wait_for = None
         if error is not None:
+            e.__traceback__ = sys.exc_info()[2]
             raise e
         return r
 

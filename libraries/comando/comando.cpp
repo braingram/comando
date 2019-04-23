@@ -158,6 +158,14 @@ bool CommandProtocol::has_arg() {
 // ================= Comando ==========
 void Comando::receive_byte(byte b) {
   if (read_state == WAITING) {
+    if (b > (MAX_MSG_LENGTH - 1)) {
+      send_error(String("Message too long ") + String(b));
+      return;
+    };
+    if (b == 0) {
+      send_error("Zero length message");
+      return;
+    };
     n_bytes = b;
     byte_index = 0;
     read_state = READING;
@@ -166,7 +174,12 @@ void Comando::receive_byte(byte b) {
       byte_index = 0; // reset byte_index for reading
       cs = b;
       if (cs != compute_checksum(bytes, n_bytes)) {
-        send_error("Invalid checksum");
+        if (n_bytes < (MAX_MSG_LENGTH - 1)) {
+          bytes[n_bytes] = '\0';
+          send_error(String("Invalid checksum ") + String((char *)bytes) + String(" ") + String(cs));
+        } else {
+          send_error(String("Invalid checksum [msg too long] ") + String(cs));
+        };
       } else {
         if (message_callback != NULL) {
           // TODO should the return value determine if default is called?
@@ -254,6 +267,10 @@ void Comando::send_error(char *buffer, byte n) {
 
 void Comando::send_error(char *buffer) {
   send_error(buffer, strlen(buffer));
+};
+
+void Comando::send_error(String str) {
+  send_error((char *)(str.c_str()), str.length());
 };
 
 byte Comando::copy_bytes(byte *buffer, byte n) {
