@@ -436,8 +436,8 @@ class EventManager(object):
         r = self._wait_for
         self._wait_for = None
         if error is not None:
-            e.__traceback__ = sys.exc_info()[2]
-            raise e
+            error.__traceback__ = sys.exc_info()[2]
+            raise error
         return r
 
     def build_namespace(self, return_ctypes=False):

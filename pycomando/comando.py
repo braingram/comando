@@ -15,10 +15,12 @@ if sys.version_info >= (3, 0):
     to_bytes = lambda i: i.to_bytes(1, 'little')
     stob = lambda s: s.encode('latin1') if isinstance(s, str) else s
     btos = lambda b: b.decode('latin1') if isinstance(b, bytes) else b
+    empty_read = bytes
 else:
     to_bytes = chr
     stob = str
     btos = str
+    empty_read = lambda: ""
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +98,7 @@ class Comando(object):
         if n != 0:
             bs = self.stream.read(n)
         else:
-            bs = ""
+            bs = empty_read()
         if len(bs) != n:
             raise errors.MessageError(
                 "Invalid message length of bytes %s != %s" %
