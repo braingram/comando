@@ -227,14 +227,14 @@ def detect_version():
     Try to detect the main package/module version by looking at:
         module.__version__
 
-    otherwise, return 'dev'
+    otherwise, return '0.0.0.dev'
     """
     try:
         m = __import__(package_name, fromlist=['__version__'])
-        return getattr(m, '__version__', 'dev')
+        return getattr(m, '__version__', '0.0.0.dev')
     except ImportError:
         pass
-    return 'dev'
+    return '0.0.0.dev'
 
 
 def author_info_from_pypirc():
